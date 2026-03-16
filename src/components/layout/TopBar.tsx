@@ -11,7 +11,7 @@ export default function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const {
     activeContext, timerTaskId, timerDuration,
     setTimerTaskId, setTimerDuration, setFocusMode, setFocusTaskId,
-    refreshKey,
+    refreshKey, syncStatus,
   } = useApp();
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [completedToday, setCompletedToday] = useState(0);
@@ -78,6 +78,31 @@ export default function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) 
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Sync indicator */}
+        {syncStatus !== 'idle' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 5, fontSize: 11,
+            color: syncStatus === 'synced' ? 'var(--color-emerald)' :
+                   syncStatus === 'error' ? 'var(--color-rose)' :
+                   syncStatus === 'offline' ? 'var(--text-muted)' : 'var(--color-sky)',
+          }}>
+            {syncStatus === 'syncing' && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                <path d="M21 12a9 9 0 11-6.22-8.56" />
+              </svg>
+            )}
+            {syncStatus === 'synced' && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5" /></svg>
+            )}
+            {syncStatus === 'error' && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+            )}
+            {syncStatus === 'offline' && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39" /></svg>
+            )}
+            <span>{syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'synced' ? 'Synced' : syncStatus === 'error' ? 'Sync error' : 'Offline'}</span>
+          </div>
+        )}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 6,
           color: 'var(--color-emerald)', fontWeight: 600, fontSize: 13,
