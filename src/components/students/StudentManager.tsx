@@ -49,8 +49,20 @@ export default function StudentManager() {
     refresh();
   };
 
+  const deleteStudent = async (id: string) => {
+    // Cascade delete related data
+    const notes = await db.notes.where('studentId').equals(id).toArray();
+    await db.notes.bulkDelete(notes.map(n => n.id));
+    const tasks = await db.tasks.where('studentId').equals(id).toArray();
+    await db.tasks.bulkDelete(tasks.map(t => t.id));
+    const lessons = await db.lessonPlans.where('studentId').equals(id).toArray();
+    await db.lessonPlans.bulkDelete(lessons.map(l => l.id));
+    await db.students.delete(id);
+    refresh();
+  };
+
   if (selectedStudent) {
-    return <StudentDetail student={selectedStudent} onBack={() => { setSelectedStudent(null); setActiveContext({}); }} />;
+    return <StudentDetail student={selectedStudent} onBack={() => { setSelectedStudent(null); setActiveContext({}); }} onDelete={() => { deleteStudent(selectedStudent.id); setSelectedStudent(null); setActiveContext({}); }} />;
   }
 
   const colors = ['#e07a5f', '#2d936c', '#4a90d9', '#e6a817', '#9b59b6', '#1abc9c'];

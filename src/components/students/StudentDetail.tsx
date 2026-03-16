@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
-import { db } from '@/lib/db';
+import { db, completeTaskById, uncompleteTaskById } from '@/lib/db';
 import {
   newId, now, formatDate, formatMinutes, priorityConfig,
   lessonStatusConfig, toDateInputValue, fromDateInput
@@ -13,7 +13,7 @@ import TaskForm from '@/components/tasks/TaskForm';
 
 type Tab = 'notes' | 'tasks' | 'lessons' | 'progress';
 
-export default function StudentDetail({ student, onBack }: { student: Student; onBack: () => void }) {
+export default function StudentDetail({ student, onBack, onDelete }: { student: Student; onBack: () => void; onDelete?: () => void }) {
   const { refreshKey, refresh } = useApp();
   const [tab, setTab] = useState<Tab>('notes');
   const [notes, setNotes] = useState<Note[]>([]);
@@ -101,10 +101,15 @@ export default function StudentDetail({ student, onBack }: { student: Student; o
             {student.contactInfo && ` · ${student.contactInfo}`}
           </div>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginLeft: 'auto', alignItems: 'center' }}>
           {student.tags.map(tag => (
             <span key={tag} className="badge">{tag}</span>
           ))}
+          {onDelete && (
+            <button className="btn-icon" onClick={onDelete} title="Delete student" style={{ color: 'var(--color-rose)', marginLeft: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
+            </button>
+          )}
         </div>
       </div>
 
@@ -155,7 +160,7 @@ export default function StudentDetail({ student, onBack }: { student: Student; o
             {tasks.map(t => (
               <div key={t.id} className="flex items-center gap-3 card" style={{ padding: '10px 14px' }}>
                 <button className="btn-icon" onClick={async () => {
-                  await db.tasks.update(t.id, { status: t.status === 'done' ? 'todo' : 'done', completedAt: t.status === 'done' ? undefined : now() });
+                  if (t.status === 'done') { await uncompleteTaskById(t.id); } else { await completeTaskById(t.id); }
                   refresh();
                 }} style={{ color: t.status === 'done' ? 'var(--color-emerald)' : 'var(--text-muted)' }}>
                   {t.status === 'done' ? '✓' : '○'}

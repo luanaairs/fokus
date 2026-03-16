@@ -79,6 +79,73 @@ export async function updateSettings(updates: Partial<AppSettings>): Promise<voi
   await db.settings.update('default', updates);
 }
 
+export async function recordStreak(): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+  const existing = await db.dailyStreaks.where('date').equals(today).first();
+  if (existing) {
+    await db.dailyStreaks.update(existing.id, { tasksCompleted: existing.tasksCompleted + 1 });
+  } else {
+    await db.dailyStreaks.put({ id: today, date: today, tasksCompleted: 1 });
+  }
+}
+
+export async function recordFocusSession(taskId: string, duration: number): Promise<void> {
+  const { v4: uuidv4 } = await import('uuid');
+  await db.focusSessions.add({
+    id: uuidv4(),
+    taskId,
+    startedAt: Date.now() - duration * 1000,
+    duration,
+    completedAt: Date.now(),
+  });
+}
+
+export async function handleRecurringTask(task: import('@/types').Task): Promise<void> {
+  if (!task.isRecurring || !task.recurrenceType) return;
+  const { v4: uuidv4 } = await import('uuid');
+
+  let nextDue: number | undefined;
+  const base = task.dueDate || Date.now();
+  const day = 24 * 60 * 60 * 1000;
+
+  switch (task.recurrenceType) {
+    case 'daily':
+      nextDue = base + day;
+      break;
+    case 'weekly':
+      nextDue = base + 7 * day;
+      break;
+    case 'custom':
+      nextDue = base + (task.recurrenceInterval || 7) * day;
+      break;
+  }
+
+  await db.tasks.add({
+    ...task,
+    id: uuidv4(),
+    status: 'todo',
+    completedAt: undefined,
+    deferredUntil: undefined,
+    dueDate: nextDue,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  });
+}
+
+export async function completeTaskById(id: string): Promise<void> {
+  const task = await db.tasks.get(id);
+  if (!task) return;
+  await db.tasks.update(id, { status: 'done', completedAt: Date.now() });
+  await recordStreak();
+  if (task.isRecurring) {
+    await handleRecurringTask(task);
+  }
+}
+
+export async function uncompleteTaskById(id: string): Promise<void> {
+  await db.tasks.update(id, { status: 'todo', completedAt: undefined });
+}
+
 export async function exportAllData(): Promise<string> {
   const data = {
     students: await db.students.toArray(),

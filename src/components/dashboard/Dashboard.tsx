@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
-import { db } from '@/lib/db';
+import { db, completeTaskById } from '@/lib/db';
 import {
   getGreeting, formatMinutes, formatDateShort,
   todayStart, todayEnd, daysFromNow, priorityConfig, now
@@ -84,7 +84,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
   const focusTask = (t: Task) => { setFocusTaskId(t.id); setFocusMode(true); };
 
   const completeTask = async (t: Task) => {
-    await db.tasks.update(t.id, { status: 'done', completedAt: now() });
+    await completeTaskById(t.id);
     refresh();
   };
 
