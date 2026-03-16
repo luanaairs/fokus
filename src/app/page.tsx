@@ -16,11 +16,13 @@ import FocusMode from '@/components/adhd/FocusMode';
 import SessionPlanner from '@/components/adhd/SessionPlanner';
 import SwitchWarning from '@/components/adhd/SwitchWarning';
 import WeeklyReview from '@/components/adhd/WeeklyReview';
+import BackupRestore from '@/components/shared/BackupRestore';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { exportAllData } from '@/lib/db';
 
 function AppShell() {
   const [currentModule, setCurrentModule] = useState('dashboard');
+  const [showBackup, setShowBackup] = useState(false);
   const { setCaptureOpen, timerTaskId, setSwitchWarning } = useApp();
 
   const handleCapture = useCallback(() => setCaptureOpen(true), [setCaptureOpen]);
@@ -66,7 +68,7 @@ function AppShell() {
 
   return (
     <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
-      <Sidebar currentModule={currentModule} onNavigate={navigate} />
+      <Sidebar currentModule={currentModule} onNavigate={navigate} onBackup={() => setShowBackup(true)} />
       <div className="flex flex-col" style={{ flex: 1, overflow: 'hidden' }}>
         <TopBar />
         <main style={{ flex: 1, overflowY: 'auto' }}>
@@ -78,6 +80,7 @@ function AppShell() {
       <SessionPlanner />
       <SwitchWarning />
       <WeeklyReview />
+      <BackupRestore open={showBackup} onClose={() => setShowBackup(false)} />
     </div>
   );
 }
