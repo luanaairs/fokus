@@ -8,11 +8,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "fokus - Teacher Productivity OS",
-  description: "A personal productivity and teaching command center, designed for ADHD minds.",
+  title: "fokus - @luanaairs",
+  description: "A personal productivity command center",
   icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/icon.png',
+    apple: '/icon.png',
   },
 };
 
