@@ -10,9 +10,7 @@ import type { Task } from '@/types';
 export default function FocusMode() {
   const { focusMode, setFocusMode, focusTaskId, setFocusTaskId, refresh } = useApp();
   const [task, setTask] = useState<Task | null>(null);
-  const timer = useTimer(() => {
-    // Timer complete
-  });
+  const timer = useTimer();
 
   useEffect(() => {
     if (focusTaskId) {
@@ -44,64 +42,73 @@ export default function FocusMode() {
   };
 
   const progress = timer.progress;
+  const circumference = 2 * Math.PI * 90;
 
   return (
     <div className="focus-overlay">
-      <button
-        onClick={exitFocus}
-        style={{
-          position: 'absolute', top: 24, right: 24,
-          background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
-          color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: 8,
-          cursor: 'pointer', fontSize: 13,
-        }}
-      >
+      <button onClick={exitFocus} style={{
+        position: 'absolute', top: 28, right: 28, cursor: 'pointer',
+      }} className="btn-secondary">
         Exit Focus Mode
       </button>
 
-      <div className="flex flex-col items-center gap-8" style={{ maxWidth: 500 }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: 13, textTransform: 'uppercase', letterSpacing: 2, fontWeight: 600 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40, maxWidth: 500 }}>
+        <div style={{
+          fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em',
+          color: 'var(--color-accent)', background: 'var(--color-accent-light)',
+          padding: '6px 20px', borderRadius: 'var(--radius-full)',
+        }}>
           Focus Mode
         </div>
 
-        <div className="timer-ring">
-          <svg viewBox="0 0 100 100" style={{ position: 'absolute', inset: -4, width: 'calc(100% + 8px)', height: 'calc(100% + 8px)', transform: 'rotate(-90deg)' }}>
-            <circle cx="50" cy="50" r="48" fill="none" stroke="var(--bg-tertiary)" strokeWidth="3" />
+        {/* Timer Ring */}
+        <div style={{ position: 'relative', width: 220, height: 220 }}>
+          <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+            <circle cx="100" cy="100" r="90" fill="none" stroke="var(--bg-input)" strokeWidth="6" />
             <circle
-              cx="50" cy="50" r="48" fill="none"
+              cx="100" cy="100" r="90" fill="none"
               stroke="var(--color-accent)"
-              strokeWidth="3"
+              strokeWidth="6"
               strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 48}`}
-              strokeDashoffset={`${2 * Math.PI * 48 * (1 - progress / 100)}`}
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - progress / 100)}
               style={{ transition: 'stroke-dashoffset 1s linear' }}
             />
           </svg>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 36, fontWeight: 700, color: 'var(--color-accent)' }}>
-            {formatTimer(timer.secondsLeft)}
-          </span>
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 42, fontWeight: 600, color: 'var(--color-accent)' }}>
+              {formatTimer(timer.secondsLeft)}
+            </span>
+          </div>
         </div>
 
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, textAlign: 'center' }}>
-          {task.title}
-        </h2>
-        {task.description && (
-          <p style={{ color: 'var(--text-secondary)', textAlign: 'center', maxWidth: 400 }}>
-            {task.description}
-          </p>
-        )}
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, marginBottom: 8 }}>
+            {task.title}
+          </h2>
+          {task.description && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: 15, maxWidth: 400 }}>
+              {task.description}
+            </p>
+          )}
+        </div>
 
-        <div className="flex gap-3">
+        <div style={{ display: 'flex', gap: 12 }}>
           {timer.isRunning ? (
-            <button className="btn-ghost" onClick={() => timer.pause()}>⏸ Pause</button>
+            <button className="btn-secondary" onClick={() => timer.pause()}>Pause</button>
           ) : timer.secondsLeft > 0 ? (
-            <button className="btn-ghost" onClick={() => timer.resume()}>▶ Resume</button>
+            <button className="btn-secondary" onClick={() => timer.resume()}>Resume</button>
           ) : (
-            <button className="btn-ghost" onClick={() => timer.start(task.estimatedMinutes * 60 || 25 * 60)}>
-              ⏱ Start Timer
+            <button className="btn-secondary" onClick={() => timer.start(task.estimatedMinutes * 60 || 25 * 60)}>
+              Start Timer
             </button>
           )}
-          <button className="btn-primary" onClick={completeTask}>✓ Complete Task</button>
+          <button className="btn-primary" onClick={completeTask} style={{ paddingLeft: 24, paddingRight: 24 }}>
+            Complete Task
+          </button>
         </div>
       </div>
     </div>

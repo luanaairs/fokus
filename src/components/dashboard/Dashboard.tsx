@@ -4,14 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
 import { db } from '@/lib/db';
 import {
-  getGreeting, formatDate, formatMinutes, formatDateShort,
-  todayStart, todayEnd, daysFromNow, priorityConfig, statusConfig, now
+  getGreeting, formatMinutes, formatDateShort,
+  todayStart, todayEnd, daysFromNow, priorityConfig, now
 } from '@/lib/utils';
-import type { Task, Project, Capture, DailyStreak, WritingProject } from '@/types';
-import EmptyState from '@/components/shared/EmptyState';
+import type { Task, Project, WritingProject } from '@/types';
 
 export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => void }) {
-  const { refreshKey, refresh, setFocusMode, setFocusTaskId, setTimerTaskId, setTimerDuration, setCaptureOpen } = useApp();
+  const { refreshKey, refresh, setFocusMode, setFocusTaskId, setCaptureOpen } = useApp();
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [completedToday, setCompletedToday] = useState<Task[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
@@ -21,6 +20,8 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectTaskCounts, setProjectTaskCounts] = useState<Record<string, { done: number; total: number }>>({});
   const [writingProjects, setWritingProjects] = useState<WritingProject[]>([]);
+  const [totalTasks, setTotalTasks] = useState(0);
+  const [totalDone, setTotalDone] = useState(0);
 
   useEffect(() => {
     const start = todayStart();
@@ -45,8 +46,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       setInboxCount(inbox);
       setWritingProjects(wps);
       setProjects(projs);
+      setTotalTasks(tasks.length);
+      setTotalDone(tasks.filter(t => t.status === 'done').length);
 
-      // Top 3
       const candidates = active.sort((a, b) => {
         const pa = priorityConfig[a.priority].sortOrder;
         const pb = priorityConfig[b.priority].sortOrder;
@@ -58,12 +60,11 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       });
       setTopThree(candidates.slice(0, 3));
 
-      // Streak
       let s = 0;
-      const today_str = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toISOString().split('T')[0];
       const streakDates = streaks.map(st => st.date);
-      if (done.length > 0 || streakDates.includes(today_str)) s++;
-      let d = new Date();
+      if (done.length > 0 || streakDates.includes(todayStr)) s++;
+      const d = new Date();
       d.setDate(d.getDate() - 1);
       while (streakDates.includes(d.toISOString().split('T')[0])) {
         s++;
@@ -71,7 +72,6 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       }
       setStreak(s);
 
-      // Project task counts
       const counts: Record<string, { done: number; total: number }> = {};
       for (const p of projs) {
         const pt = tasks.filter(t => t.projectId === p.id);
@@ -81,91 +81,140 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
     });
   }, [refreshKey]);
 
-  const focusTask = (t: Task) => {
-    setFocusTaskId(t.id);
-    setFocusMode(true);
-  };
+  const focusTask = (t: Task) => { setFocusTaskId(t.id); setFocusMode(true); };
 
   const completeTask = async (t: Task) => {
     await db.tasks.update(t.id, { status: 'done', completedAt: now() });
     refresh();
   };
 
+  const totalTimeToday = todayTasks.reduce((s, t) => s + (t.estimatedMinutes || 0), 0);
+  const overdueTasks = todayTasks.filter(t => t.dueDate && t.dueDate < now()).length;
+
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1200 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 28 }}>
+    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, marginBottom: 4 }}>
             {getGreeting()}
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 2 }}>
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+          <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>
+            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          {streak > 0 && (
-            <div className="card flex items-center gap-2" style={{ padding: '8px 14px' }}>
-              <span style={{ color: 'var(--color-amber)', fontSize: 16 }}>🔥</span>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>{streak} day streak</span>
-            </div>
-          )}
-          {inboxCount > 0 && (
-            <button className="card flex items-center gap-2" style={{ padding: '8px 14px', cursor: 'pointer' }} onClick={() => onNavigate('inbox')}>
-              <span style={{ color: 'var(--color-accent)' }}>↓</span>
-              <span style={{ fontSize: 14 }}>{inboxCount} in inbox</span>
-            </button>
-          )}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-primary" onClick={() => setCaptureOpen(true)}>
+            + Quick Capture
+          </button>
+          <button className="btn-secondary" onClick={() => onNavigate('tasks')}>
+            View All Tasks
+          </button>
         </div>
       </div>
 
+      {/* Stat Cards Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+        <div className="stat-card-accent">
+          <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Today&apos;s Tasks</div>
+          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{todayTasks.length}</div>
+          <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>{formatMinutes(totalTimeToday)} estimated</div>
+        </div>
+
+        <div className="stat-card">
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed Today</div>
+          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1, color: 'var(--color-emerald)' }}>{completedToday.length}</div>
+          <div style={{ fontSize: 12, color: 'var(--color-emerald)', marginTop: 6, fontWeight: 500 }}>
+            {completedToday.length > 0 ? 'Keep going!' : 'Let\'s start!'}
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Streak</div>
+          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1, color: 'var(--color-amber)' }}>{streak}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{streak === 1 ? 'day' : 'days'} in a row</div>
+        </div>
+
+        <div className="stat-card" style={{ cursor: inboxCount > 0 ? 'pointer' : 'default' }} onClick={() => inboxCount > 0 && onNavigate('inbox')}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Inbox</div>
+          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1, color: inboxCount > 0 ? 'var(--color-accent)' : 'var(--text-muted)' }}>{inboxCount}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+            {inboxCount > 0 ? 'items to triage' : 'all clear'}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-        {/* Today's Top 3 */}
-        <div className="card" style={{ gridColumn: topThree.length > 0 ? 'span 1' : 'span 2' }}>
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>
-              Today&apos;s Focus
-            </h2>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Top 3 highest-leverage</span>
+        {/* Today's Focus - Top 3 */}
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>Today&apos;s Focus</h2>
+            <span className="badge" style={{ background: 'var(--color-accent-light)', color: 'var(--color-accent)' }}>Top 3</span>
           </div>
           {topThree.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No tasks yet. Add some to get started.</p>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.4 }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ display: 'inline' }}><circle cx="12" cy="12" r="10" /><path d="M8 15h8M9 9h.01M15 9h.01" /></svg>
+              </div>
+              <p style={{ fontSize: 14 }}>No tasks yet. Add some to get started.</p>
+            </div>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {topThree.map((t, i) => (
-                <div key={t.id} className="flex items-center gap-3" style={{
-                  padding: '10px 12px', background: 'var(--bg-tertiary)', borderRadius: 8,
-                  borderLeft: `3px solid ${priorityConfig[t.priority].color}`,
+                <div key={t.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '14px 16px', background: 'var(--bg-input)', borderRadius: 'var(--radius-md)',
+                  borderLeft: `4px solid ${priorityConfig[t.priority].color}`,
                 }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--text-muted)', width: 24 }}>
+                  <span style={{
+                    fontFamily: 'var(--font-display)', fontSize: 24, color: 'var(--text-muted)',
+                    width: 28, textAlign: 'center', lineHeight: 1,
+                  }}>
                     {i + 1}
                   </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{t.title}</div>
                     {t.estimatedMinutes > 0 && (
                       <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatMinutes(t.estimatedMinutes)}</span>
                     )}
                   </div>
-                  <button className="btn-icon" onClick={() => focusTask(t)} title="Focus">◎</button>
-                  <button className="btn-icon" onClick={() => completeTask(t)} title="Complete">✓</button>
+                  <button className="btn-icon" onClick={() => focusTask(t)} title="Focus" style={{ color: 'var(--color-accent)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /></svg>
+                  </button>
+                  <button className="btn-icon" onClick={() => completeTask(t)} title="Complete" style={{ color: 'var(--color-emerald)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Completed Today */}
-        <div className="card">
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
-            Done Pile
-          </h2>
+        {/* Done Pile */}
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22 }}>Done Pile</h2>
+            <span className="badge" style={{ background: 'var(--color-emerald-light)', color: 'var(--color-emerald)' }}>
+              {completedToday.length} completed
+            </span>
+          </div>
           {completedToday.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Nothing yet — let&apos;s get started!</p>
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: 14 }}>Nothing yet - let&apos;s get started!</p>
+            </div>
           ) : (
-            <div className="flex flex-col gap-1" style={{ maxHeight: 200, overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
               {completedToday.map(t => (
-                <div key={t.id} className="flex items-center gap-2" style={{ padding: '6px 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-                  <span style={{ color: 'var(--color-emerald)' }}>✓</span>
-                  <span style={{ textDecoration: 'line-through', opacity: 0.7 }}>{t.title}</span>
+                <div key={t.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                  background: 'var(--color-emerald-light)',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-emerald)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5" /></svg>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'line-through', opacity: 0.8 }}>
+                    {t.title}
+                  </span>
                 </div>
               ))}
             </div>
@@ -173,70 +222,80 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
         </div>
       </div>
 
+      {/* Lower Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
-        {/* Today's Tasks */}
-        <div className="card">
-          <div className="flex items-center justify-between" style={{ marginBottom: 12 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>Today</h2>
+        {/* Today's Tasks Full List */}
+        <div className="card" style={{ padding: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20 }}>Today</h2>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {todayTasks.length} tasks · {formatMinutes(todayTasks.reduce((s, t) => s + (t.estimatedMinutes || 0), 0))}
+              {todayTasks.length} tasks · {formatMinutes(totalTimeToday)}
             </span>
           </div>
           {todayTasks.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Clear day! Add tasks or check the backlog.</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '16px 0' }}>Clear day ahead!</p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {todayTasks.map(t => (
-                <div key={t.id} className="flex items-center gap-3" style={{
-                  padding: '8px 10px', background: 'var(--bg-tertiary)', borderRadius: 6,
-                }}>
-                  <button className="btn-icon" onClick={() => completeTask(t)} style={{ color: 'var(--text-muted)' }}>○</button>
-                  <span style={{ color: priorityConfig[t.priority].color, fontSize: 10 }}>●</span>
-                  <span style={{ flex: 1, fontSize: 13 }}>{t.title}</span>
-                  {t.contextTag && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.contextTag}</span>}
-                  {t.estimatedMinutes > 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatMinutes(t.estimatedMinutes)}</span>}
-                  <button className="btn-icon" onClick={() => focusTask(t)} style={{ fontSize: 11 }}>◎</button>
+                <div key={t.id} className="task-row">
+                  <button className="btn-icon" onClick={() => completeTask(t)} style={{ color: 'var(--text-muted)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /></svg>
+                  </button>
+                  <div className="priority-dot" style={{ background: priorityConfig[t.priority].color }} />
+                  <span style={{ flex: 1, fontSize: 14 }}>{t.title}</span>
+                  {t.contextTag && <span className="badge" style={{ fontSize: 11 }}>{t.contextTag}</span>}
+                  {t.estimatedMinutes > 0 && (
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{formatMinutes(t.estimatedMinutes)}</span>
+                  )}
+                  <button className="btn-icon" onClick={() => focusTask(t)} style={{ color: 'var(--color-accent)' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /></svg>
+                  </button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Sidebar: Projects + Upcoming */}
-        <div className="flex flex-col gap-4">
+        {/* Right Sidebar Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Upcoming */}
-          <div className="card">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Upcoming</h3>
+          <div className="card" style={{ padding: 20 }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 12 }}>Upcoming</h3>
             {upcomingTasks.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Nothing this week.</p>
             ) : (
-              <div className="flex flex-col gap-1">
-                {upcomingTasks.slice(0, 8).map(t => (
-                  <div key={t.id} className="flex items-center gap-2" style={{ fontSize: 12, padding: '4px 0' }}>
-                    <span style={{ color: priorityConfig[t.priority].color }}>●</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {upcomingTasks.slice(0, 6).map(t => (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                    <div className="priority-dot" style={{ background: priorityConfig[t.priority].color, width: 6, height: 6 }} />
                     <span style={{ flex: 1 }}>{t.title}</span>
-                    <span style={{ color: 'var(--text-muted)' }}>{t.dueDate ? formatDateShort(t.dueDate) : ''}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{t.dueDate ? formatDateShort(t.dueDate) : ''}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Active Projects */}
-          <div className="card">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Projects</h3>
+          {/* Projects */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>Projects</h3>
+              <button className="btn-icon" onClick={() => onNavigate('tasks')} style={{ fontSize: 12, color: 'var(--color-accent)' }}>
+                See all
+              </button>
+            </div>
             {projects.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No projects yet.</p>
             ) : (
-              <div className="flex flex-col gap-2">
-                {projects.slice(0, 5).map(p => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {projects.slice(0, 4).map(p => {
                   const c = projectTaskCounts[p.id] || { done: 0, total: 0 };
                   const pct = c.total > 0 ? (c.done / c.total) * 100 : 0;
                   return (
                     <div key={p.id}>
-                      <div className="flex items-center gap-2" style={{ fontSize: 13, marginBottom: 4 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
-                        <span style={{ flex: 1 }}>{p.name}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 6 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: 4, background: p.color, flexShrink: 0 }} />
+                        <span style={{ flex: 1, fontWeight: 500 }}>{p.name}</span>
                         <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{c.done}/{c.total}</span>
                       </div>
                       <div className="progress-bar">
@@ -249,18 +308,18 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
             )}
           </div>
 
-          {/* Writing Projects */}
+          {/* Writing */}
           {writingProjects.length > 0 && (
-            <div className="card">
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Writing</h3>
-              <div className="flex flex-col gap-2">
+            <div className="card" style={{ padding: 20 }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 12 }}>Writing</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {writingProjects.map(wp => {
                   const pct = wp.wordCountGoal > 0 ? (wp.currentWordCount / wp.wordCountGoal) * 100 : 0;
                   return (
                     <div key={wp.id}>
-                      <div className="flex items-center justify-between" style={{ fontSize: 13, marginBottom: 4 }}>
-                        <span>{wp.title}</span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}>
+                        <span style={{ fontWeight: 500 }}>{wp.title}</span>
+                        <span style={{ color: 'var(--text-muted)', fontSize: 11, fontFamily: 'var(--font-mono)' }}>
                           {wp.currentWordCount.toLocaleString()}/{wp.wordCountGoal.toLocaleString()}
                         </span>
                       </div>

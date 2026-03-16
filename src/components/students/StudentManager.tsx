@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
 import { db } from '@/lib/db';
-import { newId, now, formatDate } from '@/lib/utils';
-import type { Student, StudentGroup, Note, Task, LessonPlan } from '@/types';
+import { newId, now } from '@/lib/utils';
+import type { Student, StudentGroup } from '@/types';
 import Modal from '@/components/shared/Modal';
 import EmptyState from '@/components/shared/EmptyState';
 import StudentDetail from './StudentDetail';
@@ -53,18 +53,25 @@ export default function StudentManager() {
     return <StudentDetail student={selectedStudent} onBack={() => { setSelectedStudent(null); setActiveContext({}); }} />;
   }
 
+  const colors = ['#e07a5f', '#2d936c', '#4a90d9', '#e6a817', '#9b59b6', '#1abc9c'];
+
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1000 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Students</h1>
-        <div className="flex gap-2">
-          <button className="btn-ghost" onClick={() => setShowGroupForm(true)}>+ Group</button>
+    <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Students</h1>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={() => setShowGroupForm(true)}>+ Group</button>
           <button className="btn-primary" onClick={() => { setEditingStudent(undefined); setShowForm(true); }}>+ Student</button>
         </div>
       </div>
 
-      <div className="flex items-center gap-3" style={{ marginBottom: 16 }}>
-        <input className="input" placeholder="Search students..." value={search} onChange={e => setSearch(e.target.value)} style={{ maxWidth: 240 }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+          </svg>
+          <input className="input" placeholder="Search students..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 36 }} />
+        </div>
         <select className="select" style={{ width: 'auto' }} value={filterGroup} onChange={e => setFilterGroup(e.target.value)}>
           <option value="">All groups</option>
           {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -76,36 +83,30 @@ export default function StudentManager() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon="◉"
-          title="No students yet"
-          description="Add your first student to get started"
-          action={{ label: '+ Add Student', onClick: () => setShowForm(true) }}
-        />
+        <EmptyState icon="👤" title="No students yet" description="Add your first student to get started" action={{ label: '+ Add Student', onClick: () => setShowForm(true) }} />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
-          {filtered.map(s => (
-            <div key={s.id} className="card" style={{ cursor: 'pointer' }} onClick={() => selectStudent(s)}>
-              <div className="flex items-center gap-3" style={{ marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
+          {filtered.map((s, i) => (
+            <div key={s.id} className="card" style={{ cursor: 'pointer', padding: 20 }} onClick={() => selectStudent(s)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
                 <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'var(--color-accent-dim)',
+                  width: 42, height: 42, borderRadius: 'var(--radius-md)',
+                  background: colors[i % colors.length] + '18',
+                  color: colors[i % colors.length],
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: 'white', fontWeight: 700, fontSize: 14,
+                  fontWeight: 700, fontSize: 16, fontFamily: 'var(--font-display)',
                 }}>
                   {s.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                    {s.grade} · {s.subject}
-                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.grade} · {s.subject}</div>
                 </div>
               </div>
               {s.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {s.tags.map(tag => (
-                    <span key={tag} className="badge" style={{ background: 'var(--bg-tertiary)', fontSize: 11 }}>{tag}</span>
+                    <span key={tag} className="badge" style={{ fontSize: 11 }}>{tag}</span>
                   ))}
                 </div>
               )}
@@ -115,19 +116,13 @@ export default function StudentManager() {
       )}
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editingStudent ? 'Edit Student' : 'Add Student'}>
-        <StudentForm
-          student={editingStudent}
-          groups={groups}
-          onSave={() => { setShowForm(false); refresh(); }}
-          onCancel={() => setShowForm(false)}
-        />
+        <StudentForm student={editingStudent} groups={groups} onSave={() => { setShowForm(false); refresh(); }} onCancel={() => setShowForm(false)} />
       </Modal>
 
       <Modal open={showGroupForm} onClose={() => setShowGroupForm(false)} title="New Group">
-        <div className="flex flex-col gap-3">
-          <input className="input" placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') saveGroup(); }} />
-          <div className="flex gap-3 justify-end">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <input className="input" placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveGroup(); }} autoFocus />
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button className="btn-ghost" onClick={() => setShowGroupForm(false)}>Cancel</button>
             <button className="btn-primary" onClick={saveGroup}>Create</button>
           </div>
@@ -151,33 +146,29 @@ function StudentForm({ student, groups, onSave, onCancel }: {
     if (!name.trim()) return;
     const data: Student = {
       id: student?.id || newId(),
-      name: name.trim(),
-      grade,
-      subject,
-      contactInfo,
+      name: name.trim(), grade, subject, contactInfo,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       groupId: groupId || undefined,
-      createdAt: student?.createdAt || now(),
-      updatedAt: now(),
+      createdAt: student?.createdAt || now(), updatedAt: now(),
     };
     await db.students.put(data);
     onSave();
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <input className="input" placeholder="Name" value={name} onChange={e => setName(e.target.value)} autoFocus />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <input className="input" placeholder="Grade / Level" value={grade} onChange={e => setGrade(e.target.value)} />
         <input className="input" placeholder="Subject" value={subject} onChange={e => setSubject(e.target.value)} />
       </div>
       <input className="input" placeholder="Contact info" value={contactInfo} onChange={e => setContactInfo(e.target.value)} />
-      <input className="input" placeholder="Tags (comma-separated, e.g. struggling, advanced)" value={tags} onChange={e => setTags(e.target.value)} />
+      <input className="input" placeholder="Tags (comma-separated)" value={tags} onChange={e => setTags(e.target.value)} />
       <select className="select" value={groupId} onChange={e => setGroupId(e.target.value)}>
         <option value="">No group</option>
         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
       </select>
-      <div className="flex gap-3 justify-end" style={{ marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
         <button className="btn-ghost" onClick={onCancel}>Cancel</button>
         <button className="btn-primary" onClick={save}>{student ? 'Update' : 'Add'} Student</button>
       </div>
