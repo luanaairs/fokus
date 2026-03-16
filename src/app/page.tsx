@@ -13,18 +13,17 @@ import Inbox from '@/components/adhd/Inbox';
 import ParkingLot from '@/components/adhd/ParkingLot';
 import RoutineManager from '@/components/routines/RoutineManager';
 import RoutineNudge from '@/components/routines/RoutineNudge';
+import SettingsPage from '@/components/settings/SettingsPage';
 import QuickCapture from '@/components/adhd/QuickCapture';
 import FocusMode from '@/components/adhd/FocusMode';
 import SessionPlanner from '@/components/adhd/SessionPlanner';
 import SwitchWarning from '@/components/adhd/SwitchWarning';
 import WeeklyReview from '@/components/adhd/WeeklyReview';
-import BackupRestore from '@/components/shared/BackupRestore';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { exportAllData } from '@/lib/db';
 
 function AppShell() {
   const [currentModule, setCurrentModule] = useState('dashboard');
-  const [showBackup, setShowBackup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { setCaptureOpen, timerTaskId, setSwitchWarning } = useApp();
 
@@ -61,12 +60,13 @@ function AppShell() {
     switch (currentModule) {
       case 'dashboard': return <Dashboard onNavigate={navigate} />;
       case 'tasks': return <TaskList />;
+      case 'routines': return <RoutineManager />;
       case 'students': return <StudentManager />;
       case 'writing': return <WritingProjects />;
       case 'priorities': return <EisenhowerMatrix />;
-      case 'routines': return <RoutineManager />;
       case 'inbox': return <Inbox />;
       case 'parking': return <ParkingLot />;
+      case 'settings': return <SettingsPage />;
       default: return <Dashboard onNavigate={navigate} />;
     }
   };
@@ -75,7 +75,7 @@ function AppShell() {
     <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
       {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
       <div className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <Sidebar currentModule={currentModule} onNavigate={navigate} onBackup={() => { setShowBackup(true); setSidebarOpen(false); }} />
+        <Sidebar currentModule={currentModule} onNavigate={navigate} />
       </div>
       <div className="flex flex-col" style={{ flex: 1, overflow: 'hidden' }}>
         <TopBar onMenuToggle={() => setSidebarOpen(o => !o)} />
@@ -88,8 +88,7 @@ function AppShell() {
       <SessionPlanner />
       <SwitchWarning />
       <WeeklyReview />
-      <BackupRestore open={showBackup} onClose={() => setShowBackup(false)} />
-      <RoutineNudge onStartRoutine={(id) => { setCurrentModule('routines'); }} />
+      <RoutineNudge onStartRoutine={() => setCurrentModule('routines')} />
     </div>
   );
 }

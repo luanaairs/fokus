@@ -81,7 +81,7 @@ export default function RoutineNudge({ onStartRoutine }: Props) {
         </span>
         <span style={{ color: 'var(--text-muted)' }}> — {formatMinutes(nudge.totalMinutes)} to complete</span>
       </div>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, marginBottom: 12 }}>
         {nudge.routine.name}
       </div>
       <div style={{ display: 'flex', gap: 8 }}>

@@ -1,48 +1,48 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: 'DM Serif Display', serif;
+  --font-display: 'Special Gothic Expanded One', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --color-accent: #e07a5f;
-  --color-accent-hover: #c96a50;
-  --color-accent-light: #fdf0ec;
-  --color-accent-muted: #f4b8a6;
+  --color-accent: #A2383B;
+  --color-accent-hover: #8A2F32;
+  --color-accent-light: #f5e5e6;
+  --color-accent-muted: #CD9196;
 
   --color-emerald: #2d936c;
   --color-emerald-light: #e8f5ef;
-  --color-amber: #e6a817;
-  --color-amber-light: #fef9e7;
-  --color-rose: #d94f5c;
-  --color-rose-light: #fdedef;
-  --color-sky: #4a90d9;
-  --color-sky-light: #eaf2fb;
+  --color-amber: #E2A716;
+  --color-amber-light: #fdf6e0;
+  --color-rose: #CD9196;
+  --color-rose-light: #f7eced;
+  --color-sky: #6197E8;
+  --color-sky-light: #e8eff9;
 
-  --color-critical: #d94f5c;
-  --color-high: #e07a5f;
-  --color-medium: #e6a817;
+  --color-critical: #A2383B;
+  --color-high: #E2A716;
+  --color-medium: #6197E8;
   --color-low: #2d936c;
 }
 
 @layer base {
   :root {
-    --bg-app: #f4f1ee;
-    --bg-card: #ffffff;
-    --bg-sidebar: #ffffff;
-    --bg-input: #f7f5f3;
-    --bg-hover: #f0ede9;
-    --bg-tertiary: #eceae6;
-    --bg-badge: #f4f1ee;
+    --bg-app: #E8E4D1;
+    --bg-card: #faf9f4;
+    --bg-sidebar: #f5f3ea;
+    --bg-input: #f0ede2;
+    --bg-hover: #e2dece;
+    --bg-tertiary: #ddd9c8;
+    --bg-badge: #ece9da;
     --text-primary: #1a1a1a;
-    --text-secondary: #5a5a5a;
-    --text-muted: #9a9a9a;
-    --border-color: #e8e4e0;
-    --border-light: #f0ede9;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
-    --shadow-focus: 0 0 0 3px rgba(224, 122, 95, 0.2);
+    --text-secondary: #4a4a4a;
+    --text-muted: #8a8878;
+    --border-color: #d6d2c2;
+    --border-light: #e2dece;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05);
+    --shadow-focus: 0 0 0 3px rgba(162, 56, 59, 0.2);
     --radius-sm: 10px;
     --radius-md: 14px;
     --radius-lg: 18px;
@@ -51,21 +51,22 @@
   }
 
   [data-theme="dark"] {
-    --bg-app: #141218;
-    --bg-card: #1e1c24;
-    --bg-sidebar: #1a1820;
-    --bg-input: #262430;
-    --bg-hover: #2a2836;
-    --bg-tertiary: #322f3e;
-    --bg-badge: #262430;
-    --text-primary: #f0ecf6;
-    --text-secondary: #a8a4b0;
-    --text-muted: #6e6a78;
-    --border-color: #2e2c38;
-    --border-light: #262430;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+    --bg-app: #1a1914;
+    --bg-card: #24231c;
+    --bg-sidebar: #201f18;
+    --bg-input: #2c2b22;
+    --bg-hover: #33322a;
+    --bg-tertiary: #3a3930;
+    --bg-badge: #2c2b22;
+    --text-primary: #ede9db;
+    --text-secondary: #a8a494;
+    --text-muted: #6e6b5e;
+    --border-color: #3a3930;
+    --border-light: #2c2b22;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.25);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.45);
+    --shadow-focus: 0 0 0 3px rgba(162, 56, 59, 0.35);
   }
 
   * {
@@ -86,7 +87,7 @@
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.02em;
   }
 
   ::selection {
@@ -141,11 +142,11 @@
     transition: all 0.2s ease;
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 8px rgba(224, 122, 95, 0.25);
+    box-shadow: 0 2px 8px rgba(162, 56, 59, 0.25);
   }
   .btn-primary:hover {
     background: var(--color-accent-hover);
-    box-shadow: 0 4px 12px rgba(224, 122, 95, 0.35);
+    box-shadow: 0 4px 12px rgba(162, 56, 59, 0.35);
     transform: translateY(-1px);
   }
   .btn-primary:active {

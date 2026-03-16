@@ -85,7 +85,7 @@ export default function StudentManager() {
     return <StudentDetail student={selectedStudent} onBack={() => { setSelectedStudent(null); setActiveContext({}); }} onDelete={() => { setConfirmDelete({ type: 'student', id: selectedStudent.id, name: selectedStudent.name }); }} />;
   }
 
-  const colors = ['#e07a5f', '#2d936c', '#4a90d9', '#e6a817', '#9b59b6', '#1abc9c'];
+  const colors = ['#A2383B', '#2d936c', '#6197E8', '#E2A716', '#CD9196', '#1abc9c'];
 
   return (
     <div className="page-content" style={{ padding: '32px 36px', maxWidth: 1000 }}>
@@ -131,7 +131,7 @@ export default function StudentManager() {
                   background: colors[i % colors.length] + '18',
                   color: colors[i % colors.length],
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 700, fontSize: 16, fontFamily: 'var(--font-display)',
+                  fontSize: 16, fontFamily: 'var(--font-display)',
                 }}>
                   {s.name.charAt(0).toUpperCase()}
                 </div>

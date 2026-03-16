@@ -12,6 +12,7 @@ import Modal from '@/components/shared/Modal';
 import TaskForm from './TaskForm';
 import ProjectManager from './ProjectManager';
 import EmptyState from '@/components/shared/EmptyState';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 type ViewMode = 'today' | 'upcoming' | 'project' | 'student' | 'backlog' | 'all';
 type SortMode = 'priority' | 'due' | 'title' | 'created';
@@ -29,6 +30,7 @@ export default function TaskList() {
   const [showSubtaskForm, setShowSubtaskForm] = useState<string | null>(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [sortBy, setSortBy] = useState<SortMode>('priority');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     db.projects.toArray().then(setProjects);
@@ -180,7 +182,7 @@ export default function TaskList() {
               task={t}
               onComplete={() => complete(t.id)}
               onEdit={() => { setEditingTask(t); setShowForm(true); }}
-              onDelete={() => deleteTask(t.id)}
+              onDelete={() => setConfirmDelete(t.id)}
               onDefer={(d) => defer(t.id, d)}
               onFocus={() => { setFocusTaskId(t.id); setFocusMode(true); }}
               onTimer={() => startTimer(t)}
@@ -203,6 +205,14 @@ export default function TaskList() {
       </Modal>
 
       <ProjectManager open={showProjectManager} onClose={() => setShowProjectManager(false)} onRefresh={() => { db.projects.toArray().then(setProjects); refresh(); }} />
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Task"
+        message="Delete this task and all its subtasks? This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => { if (confirmDelete) deleteTask(confirmDelete); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

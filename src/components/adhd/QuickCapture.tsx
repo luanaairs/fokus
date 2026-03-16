@@ -5,7 +5,7 @@ import { useApp } from '@/lib/context';
 import { useEscape } from '@/hooks/useKeyboard';
 import { db } from '@/lib/db';
 import { newId, now } from '@/lib/utils';
-import type { Student, Project } from '@/types';
+import type { Student, Project, Routine } from '@/types';
 
 export default function QuickCapture() {
   const { captureOpen, setCaptureOpen, refresh } = useApp();
@@ -13,6 +13,7 @@ export default function QuickCapture() {
   const [tag, setTag] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [routines, setRoutines] = useState<Routine[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEscape(() => setCaptureOpen(false));
@@ -21,6 +22,7 @@ export default function QuickCapture() {
     if (captureOpen) {
       db.students.toArray().then(setStudents);
       db.projects.toArray().then(setProjects);
+      db.routines.toArray().then(all => setRoutines(all.filter(r => r.isActive)));
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setContent('');
@@ -33,15 +35,32 @@ export default function QuickCapture() {
   const submit = async () => {
     if (!content.trim()) return;
     const [tagType, tagId] = tag.split(':');
-    await db.captures.add({
-      id: newId(),
-      content: content.trim(),
-      tags: tag ? [tag] : [],
-      studentId: tagType === 'student' ? tagId : undefined,
-      projectId: tagType === 'project' ? tagId : undefined,
-      processed: false,
-      createdAt: now(),
-    });
+
+    // If routing to a routine, add as a step instead of a capture
+    if (tagType === 'routine' && tagId) {
+      const existingItems = await db.routineItems.where('routineId').equals(tagId).toArray();
+      const maxSort = existingItems.length > 0 ? Math.max(...existingItems.map(i => i.sortOrder)) : -1;
+      await db.routineItems.add({
+        id: newId(),
+        routineId: tagId,
+        type: 'step',
+        title: content.trim(),
+        durationMinutes: 10,
+        sortOrder: maxSort + 1,
+        createdAt: now(),
+      });
+    } else {
+      await db.captures.add({
+        id: newId(),
+        content: content.trim(),
+        tags: tag ? [tag] : [],
+        studentId: tagType === 'student' ? tagId : undefined,
+        projectId: tagType === 'project' ? tagId : undefined,
+        processed: false,
+        createdAt: now(),
+      });
+    }
+
     setContent('');
     setTag('');
     setCaptureOpen(false);
@@ -82,6 +101,11 @@ export default function QuickCapture() {
             <optgroup label="Projects">
               {projects.map(p => <option key={p.id} value={`project:${p.id}`}>{p.name}</option>)}
             </optgroup>
+            {routines.length > 0 && (
+              <optgroup label="Routines">
+                {routines.map(r => <option key={r.id} value={`routine:${r.id}`}>{r.name}</option>)}
+              </optgroup>
+            )}
           </select>
           <div style={{ flex: 1 }} />
           <button className="btn-ghost" onClick={() => setCaptureOpen(false)}>Cancel</button>

@@ -20,7 +20,8 @@ export default function SessionPlanner() {
       setSelected(new Set());
       return;
     }
-    db.tasks.where('status').anyOf('todo', 'in_progress').toArray().then(tasks => {
+    db.tasks.where('status').anyOf('todo', 'in_progress').toArray().then(all => {
+      const tasks = all.filter(t => !t.deferredUntil || t.deferredUntil <= Date.now());
       const sorted = tasks.sort((a, b) => {
         const pa = priorityConfig[a.priority].sortOrder;
         const pb = priorityConfig[b.priority].sortOrder;

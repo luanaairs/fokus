@@ -90,7 +90,7 @@ export default function StudentDetail({ student, onBack, onDelete }: { student: 
           width: 52, height: 52, borderRadius: 'var(--radius-md)',
           background: 'var(--color-accent-light)', color: 'var(--color-accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: 22, fontFamily: 'var(--font-display)',
+          fontSize: 22, fontFamily: 'var(--font-display)',
         }}>
           {student.name.charAt(0).toUpperCase()}
         </div>

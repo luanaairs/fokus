@@ -6,11 +6,13 @@ import { db } from '@/lib/db';
 import { newId, now, formatDate } from '@/lib/utils';
 import type { ParkingLotItem } from '@/types';
 import EmptyState from '@/components/shared/EmptyState';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 export default function ParkingLot() {
   const { refreshKey, refresh } = useApp();
   const [items, setItems] = useState<ParkingLotItem[]>([]);
   const [input, setInput] = useState('');
+  const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
     db.parkingLot.where('processed').equals(0).toArray().then(i =>
@@ -68,12 +70,21 @@ export default function ParkingLot() {
               </button>
             </div>
           ))}
-          <button className="btn-ghost" style={{ marginTop: 8, alignSelf: 'flex-start' }} onClick={async () => {
-            await Promise.all(items.map(i => db.parkingLot.update(i.id, { processed: true })));
-            refresh();
-          }}>Clear all</button>
+          <button className="btn-ghost" style={{ marginTop: 8, alignSelf: 'flex-start' }} onClick={() => setConfirmClear(true)}>Clear all</button>
         </div>
       )}
+      <ConfirmDialog
+        open={confirmClear}
+        title="Clear Parking Lot"
+        message={`Dismiss all ${items.length} items? This cannot be undone.`}
+        confirmLabel="Clear all"
+        onConfirm={async () => {
+          await Promise.all(items.map(i => db.parkingLot.update(i.id, { processed: true })));
+          setConfirmClear(false);
+          refresh();
+        }}
+        onCancel={() => setConfirmClear(false)}
+      />
     </div>
   );
 }

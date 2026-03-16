@@ -135,7 +135,7 @@ export default function RoutineManager() {
   return (
     <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1000 }}>
       <div className="header-with-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Routines</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28 }}>Routines</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button className={view === 'list' ? 'btn-ghost' : 'btn-secondary'} onClick={() => setView('day')} style={{ fontSize: 12 }}>
             Day View
@@ -181,7 +181,7 @@ export default function RoutineManager() {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ color: tl.color, fontSize: 16 }}>{tl.icon}</span>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700 }}>{r.name}</h3>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16 }}>{r.name}</h3>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {r.isActive && (
@@ -367,7 +367,7 @@ function TemplateLibrary({ onInstall, onCancel }: {
       {TEMPLATES.map((t, i) => (
         <div key={i} className="card" style={{ padding: '16px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700 }}>{t.name}</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16 }}>{t.name}</h3>
             <button className="btn-primary" onClick={() => onInstall(t)} style={{ fontSize: 12, padding: '5px 12px' }}>
               Use template
             </button>

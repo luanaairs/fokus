@@ -261,7 +261,7 @@ export default function RoutineEditor({ routine, onBack, onStartRun }: Props) {
 
       <div className="header-with-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>{routineData.name}</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28 }}>{routineData.name}</h1>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
             {routineData.type === 'fixed' && `Fixed · ${routineData.timeOfDay}`}
             {routineData.type === 'timed' && `Time-blocked${routineData.startTime ? ` · starts ${routineData.startTime}` : ''}`}
