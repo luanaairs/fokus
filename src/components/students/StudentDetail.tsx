@@ -79,41 +79,49 @@ export default function StudentDetail({ student, onBack }: { student: Student; o
   ];
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1000 }}>
-      <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 16, fontSize: 13 }}>← Back to Students</button>
+    <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
+      <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 20, fontSize: 13 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+        Back to Students
+      </button>
 
-      <div className="flex items-center gap-4" style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 28 }}>
         <div style={{
-          width: 48, height: 48, borderRadius: '50%',
-          background: 'var(--color-accent-dim)',
+          width: 52, height: 52, borderRadius: 'var(--radius-md)',
+          background: 'var(--color-accent-light)', color: 'var(--color-accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'white', fontWeight: 700, fontSize: 20,
+          fontWeight: 700, fontSize: 22, fontFamily: 'var(--font-display)',
         }}>
           {student.name.charAt(0).toUpperCase()}
         </div>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700 }}>{student.name}</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28 }}>{student.name}</h1>
           <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
             {student.grade} · {student.subject}
             {student.contactInfo && ` · ${student.contactInfo}`}
           </div>
         </div>
-        <div className="flex flex-wrap gap-1" style={{ marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginLeft: 'auto' }}>
           {student.tags.map(tag => (
-            <span key={tag} className="badge" style={{ background: 'var(--bg-tertiary)' }}>{tag}</span>
+            <span key={tag} className="badge">{tag}</span>
           ))}
         </div>
       </div>
 
-      <div className="flex items-center gap-1" style={{ marginBottom: 16, borderBottom: '1px solid var(--border-color)', paddingBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 20, borderBottom: '1px solid var(--border-light)', paddingBottom: 12 }}>
         {tabs.map(t => (
           <button
             key={t.id}
-            className={tab === t.id ? 'btn-primary' : 'btn-ghost'}
-            style={{ fontSize: 13, padding: '6px 14px' }}
+            style={{
+              padding: '8px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+              background: 'transparent', border: 'none',
+              color: tab === t.id ? 'var(--color-accent)' : 'var(--text-muted)',
+              borderBottom: tab === t.id ? '2px solid var(--color-accent)' : '2px solid transparent',
+              transition: 'all 0.15s ease',
+            }}
             onClick={() => setTab(t.id)}
           >
-            {t.label} <span style={{ opacity: 0.6, marginLeft: 4 }}>{t.count}</span>
+            {t.label} <span style={{ opacity: 0.5, marginLeft: 4 }}>{t.count}</span>
           </button>
         ))}
       </div>

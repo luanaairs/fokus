@@ -64,11 +64,6 @@ export default function TaskList() {
         return priorityConfig[a.priority].sortOrder - priorityConfig[b.priority].sortOrder;
       });
 
-      // Attach subtasks
-      const withSubs = filtered.map(t => ({
-        ...t,
-        _subtasks: allTasks.filter(s => s.parentTaskId === t.id),
-      }));
       setTasks(filtered);
     });
   }, [refreshKey, view, filterProject, filterStudent]);
@@ -86,7 +81,6 @@ export default function TaskList() {
 
   const deleteTask = async (id: string) => {
     await db.tasks.delete(id);
-    // Delete subtasks
     const subs = await db.tasks.where('parentTaskId').equals(id).toArray();
     await db.tasks.bulkDelete(subs.map(s => s.id));
     refresh();
@@ -107,18 +101,24 @@ export default function TaskList() {
   ];
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1000 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Tasks</h1>
+    <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Tasks</h1>
         <button className="btn-primary" onClick={() => { setEditingTask(undefined); setShowForm(true); }}>+ New Task</button>
       </div>
 
-      <div className="flex items-center gap-2" style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
         {views.map(v => (
           <button
             key={v.id}
-            className={view === v.id ? 'btn-primary' : 'btn-ghost'}
-            style={{ fontSize: 13, padding: '6px 12px' }}
+            style={{
+              padding: '7px 16px', borderRadius: 'var(--radius-full)', fontSize: 13, fontWeight: 500,
+              background: view === v.id ? 'var(--color-accent)' : 'var(--bg-card)',
+              color: view === v.id ? 'white' : 'var(--text-secondary)',
+              border: view === v.id ? 'none' : '1px solid var(--border-color)',
+              cursor: 'pointer', transition: 'all 0.15s ease',
+              boxShadow: view === v.id ? '0 2px 8px rgba(224,122,95,0.25)' : 'var(--shadow-sm)',
+            }}
             onClick={() => setView(v.id)}
           >
             {v.label}
@@ -126,13 +126,13 @@ export default function TaskList() {
         ))}
 
         {view === 'project' && (
-          <select className="select" style={{ width: 'auto', marginLeft: 8 }} value={filterProject} onChange={e => setFilterProject(e.target.value)}>
+          <select className="select" style={{ width: 'auto', marginLeft: 8, borderRadius: 'var(--radius-full)' }} value={filterProject} onChange={e => setFilterProject(e.target.value)}>
             <option value="">All projects</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         )}
         {view === 'student' && (
-          <select className="select" style={{ width: 'auto', marginLeft: 8 }} value={filterStudent} onChange={e => setFilterStudent(e.target.value)}>
+          <select className="select" style={{ width: 'auto', marginLeft: 8, borderRadius: 'var(--radius-full)' }} value={filterStudent} onChange={e => setFilterStudent(e.target.value)}>
             <option value="">All students</option>
             {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -147,7 +147,7 @@ export default function TaskList() {
           action={{ label: '+ New Task', onClick: () => setShowForm(true) }}
         />
       ) : (
-        <div className="flex flex-col gap-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {tasks.map(t => (
             <TaskRow
               key={t.id}
@@ -169,19 +169,11 @@ export default function TaskList() {
       )}
 
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editingTask ? 'Edit Task' : 'New Task'} wide>
-        <TaskForm
-          task={editingTask}
-          onSave={() => { setShowForm(false); refresh(); }}
-          onCancel={() => setShowForm(false)}
-        />
+        <TaskForm task={editingTask} onSave={() => { setShowForm(false); refresh(); }} onCancel={() => setShowForm(false)} />
       </Modal>
 
       <Modal open={!!showSubtaskForm} onClose={() => setShowSubtaskForm(null)} title="Add Subtask">
-        <TaskForm
-          defaults={{ parentTaskId: showSubtaskForm || undefined }}
-          onSave={() => { setShowSubtaskForm(null); refresh(); }}
-          onCancel={() => setShowSubtaskForm(null)}
-        />
+        <TaskForm defaults={{ parentTaskId: showSubtaskForm || undefined }} onSave={() => { setShowSubtaskForm(null); refresh(); }} onCancel={() => setShowSubtaskForm(null)} />
       </Modal>
     </div>
   );
@@ -191,18 +183,10 @@ function TaskRow({
   task, onComplete, onEdit, onDelete, onDefer, onFocus, onTimer, onAddSubtask,
   projects, students, refreshKey, refresh,
 }: {
-  task: Task;
-  onComplete: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  onDefer: (days: number) => void;
-  onFocus: () => void;
-  onTimer: () => void;
-  onAddSubtask: () => void;
-  projects: Project[];
-  students: Student[];
-  refreshKey: number;
-  refresh: () => void;
+  task: Task; onComplete: () => void; onEdit: () => void; onDelete: () => void;
+  onDefer: (days: number) => void; onFocus: () => void; onTimer: () => void;
+  onAddSubtask: () => void; projects: Project[]; students: Student[];
+  refreshKey: number; refresh: () => void;
 }) {
   const [subtasks, setSubtasks] = useState<Task[]>([]);
   const [showActions, setShowActions] = useState(false);
@@ -218,37 +202,39 @@ function TaskRow({
   return (
     <div>
       <div
-        className="flex items-center gap-3"
-        style={{
-          padding: '10px 14px',
-          background: 'var(--bg-secondary)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 8,
-          opacity: isDone ? 0.5 : 1,
-        }}
+        className="task-row"
+        style={{ opacity: isDone ? 0.5 : 1 }}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
       >
-        <button className="btn-icon" onClick={onComplete} style={{ color: isDone ? 'var(--color-emerald)' : 'var(--text-muted)', fontSize: 16 }}>
-          {isDone ? '✓' : '○'}
+        <button className="btn-icon" onClick={onComplete} style={{ color: isDone ? 'var(--color-emerald)' : 'var(--text-muted)' }}>
+          {isDone ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--color-emerald)" stroke="var(--color-emerald)" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M8 12l2.5 2.5L16 9" stroke="white" strokeWidth="2.5" fill="none" /></svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /></svg>
+          )}
         </button>
-        <span style={{ color: priorityConfig[task.priority].color, fontSize: 10 }}>●</span>
-        <div style={{ flex: 1, cursor: 'pointer' }} onClick={onEdit}>
+        <div className="priority-dot" style={{ background: priorityConfig[task.priority].color }} />
+        <div style={{ flex: 1, cursor: 'pointer', minWidth: 0 }} onClick={onEdit}>
           <div style={{ fontSize: 14, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none' }}>
             {task.title}
           </div>
-          <div className="flex items-center gap-2" style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
             {project && (
-              <span className="badge" style={{ background: project.color + '22', color: project.color }}>{project.name}</span>
+              <span className="badge" style={{ background: project.color + '15', color: project.color, fontSize: 11 }}>{project.name}</span>
             )}
-            {student && <span className="badge" style={{ background: 'var(--bg-tertiary)' }}>{student.name}</span>}
-            {task.contextTag && <span>{task.contextTag}</span>}
-            {task.isRecurring && <span>↻</span>}
-            {subtasks.length > 0 && <span>{subtasks.filter(s => s.status === 'done').length}/{subtasks.length} subtasks</span>}
+            {student && <span className="badge" style={{ fontSize: 11 }}>{student.name}</span>}
+            {task.contextTag && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{task.contextTag}</span>}
+            {task.isRecurring && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>↻ recurring</span>}
+            {subtasks.length > 0 && (
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {subtasks.filter(s => s.status === 'done').length}/{subtasks.length} subtasks
+              </span>
+            )}
           </div>
         </div>
         {task.dueDate && (
-          <span style={{ fontSize: 12, color: task.dueDate < now() && !isDone ? 'var(--color-rose)' : 'var(--text-muted)' }}>
+          <span style={{ fontSize: 12, color: task.dueDate < now() && !isDone ? 'var(--color-rose)' : 'var(--text-muted)', fontWeight: 500 }}>
             {formatDateShort(task.dueDate)}
           </span>
         )}
@@ -258,7 +244,7 @@ function TaskRow({
           </span>
         )}
         <span className="badge" style={{
-          background: statusConfig[task.status].color + '22',
+          background: statusConfig[task.status].color + '15',
           color: statusConfig[task.status].color,
           fontSize: 11,
         }}>
@@ -266,27 +252,41 @@ function TaskRow({
         </span>
 
         {showActions && !isDone && (
-          <div className="flex items-center gap-1">
-            <button className="btn-icon" onClick={onTimer} title="Start timer">⏱</button>
-            <button className="btn-icon" onClick={onFocus} title="Focus mode">◎</button>
-            <button className="btn-icon" onClick={() => onDefer(1)} title="Defer to tomorrow">→</button>
-            <button className="btn-icon" onClick={onAddSubtask} title="Add subtask" style={{ fontSize: 11 }}>+sub</button>
-            <button className="btn-icon" onClick={onDelete} title="Delete" style={{ color: 'var(--color-rose)' }}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <button className="btn-icon" onClick={onTimer} title="Start timer" style={{ color: 'var(--color-accent)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+            </button>
+            <button className="btn-icon" onClick={onFocus} title="Focus mode" style={{ color: 'var(--color-accent)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /></svg>
+            </button>
+            <button className="btn-icon" onClick={() => onDefer(1)} title="Defer to tomorrow">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </button>
+            <button className="btn-icon" onClick={onAddSubtask} title="Add subtask" style={{ fontSize: 10, fontWeight: 600 }}>+sub</button>
+            <button className="btn-icon" onClick={onDelete} title="Delete" style={{ color: 'var(--color-rose)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
           </div>
         )}
       </div>
 
       {subtasks.length > 0 && (
-        <div style={{ marginLeft: 36, marginTop: 2 }}>
+        <div style={{ marginLeft: 44, marginTop: 4 }}>
           {subtasks.map(sub => (
-            <div key={sub.id} className="flex items-center gap-2" style={{
-              padding: '6px 10px', fontSize: 13, borderLeft: '2px solid var(--border-color)',
+            <div key={sub.id} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '6px 12px', fontSize: 13, borderLeft: '2px solid var(--border-color)',
+              marginBottom: 2,
             }}>
               <button className="btn-icon" onClick={async () => {
                 await db.tasks.update(sub.id, { status: sub.status === 'done' ? 'todo' : 'done', completedAt: sub.status === 'done' ? undefined : now() });
                 refresh();
-              }} style={{ color: sub.status === 'done' ? 'var(--color-emerald)' : 'var(--text-muted)', fontSize: 14 }}>
-                {sub.status === 'done' ? '✓' : '○'}
+              }} style={{ color: sub.status === 'done' ? 'var(--color-emerald)' : 'var(--text-muted)', padding: 4 }}>
+                {sub.status === 'done' ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--color-emerald)" stroke="var(--color-emerald)" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M8 12l2.5 2.5L16 9" stroke="white" strokeWidth="2.5" fill="none" /></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /></svg>
+                )}
               </button>
               <span style={{ textDecoration: sub.status === 'done' ? 'line-through' : 'none', color: sub.status === 'done' ? 'var(--text-muted)' : 'var(--text-primary)' }}>
                 {sub.title}

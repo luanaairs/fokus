@@ -38,7 +38,28 @@ class FokusDB extends Dexie {
   }
 }
 
-export const db = new FokusDB();
+// Lazy-init to avoid SSR issues — IndexedDB only exists in the browser
+let _db: FokusDB | null = null;
+
+function getDB(): FokusDB {
+  if (!_db) {
+    _db = new FokusDB();
+  }
+  return _db;
+}
+
+export const db: FokusDB = typeof window !== 'undefined'
+  ? getDB()
+  : (new Proxy({} as FokusDB, {
+      get(_target, prop) {
+        // During SSR, return a no-op proxy so imports don't crash
+        if (prop === 'then') return undefined;
+        return new Proxy(() => {}, {
+          get: () => () => Promise.resolve([]),
+          apply: () => Promise.resolve([]),
+        });
+      },
+    }));
 
 export async function getSettings(): Promise<AppSettings> {
   let settings = await db.settings.get('default');

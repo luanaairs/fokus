@@ -46,7 +46,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [timerTaskId, setTimerTaskId] = useState<string | null>(null);
   const [timerDuration, setTimerDuration] = useState(0);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [switchWarning, setSwitchWarning] = useState<{ show: boolean; taskTitle: string; onContinue: () => void } | null>(null);
 
   useEffect(() => {

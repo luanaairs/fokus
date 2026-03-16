@@ -15,10 +15,10 @@ export default function ConfirmDialog({ open, title, message, confirmLabel, onCo
   if (!open) return null;
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onCancel(); }}>
-      <div className="modal-content" style={{ maxWidth: 400 }}>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{title}</h3>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 20 }}>{message}</p>
-        <div className="flex gap-3 justify-end">
+      <div className="modal-content" style={{ maxWidth: 400, textAlign: 'center', padding: '32px' }}>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 8 }}>{title}</h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: 24 }}>{message}</p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
           <button className="btn-ghost" onClick={onCancel}>Cancel</button>
           <button className="btn-primary" onClick={onConfirm}>{confirmLabel || 'Confirm'}</button>
         </div>

@@ -50,11 +50,16 @@ export default function QuickCapture() {
 
   return (
     <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setCaptureOpen(false); }}>
-      <div className="modal-content" style={{ maxWidth: 500 }}>
-        <div className="flex items-center gap-2" style={{ marginBottom: 12 }}>
-          <span style={{ color: 'var(--color-accent)', fontSize: 18 }}>+</span>
-          <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>Quick Capture</span>
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 'auto' }}>Esc to close</span>
+      <div className="modal-content" style={{ maxWidth: 520 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 'var(--radius-sm)',
+            background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          </div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, flex: 1 }}>Quick Capture</h2>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', background: 'var(--bg-input)', padding: '3px 8px', borderRadius: 'var(--radius-sm)' }}>Esc</span>
         </div>
         <textarea
           ref={inputRef}
@@ -66,10 +71,11 @@ export default function QuickCapture() {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
           }}
           rows={3}
+          style={{ marginBottom: 14 }}
         />
-        <div className="flex items-center gap-3" style={{ marginTop: 12 }}>
-          <select className="select" style={{ width: 'auto', minWidth: 160 }} value={tag} onChange={e => setTag(e.target.value)}>
-            <option value="">No tag (→ Inbox)</option>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <select className="select" style={{ width: 'auto', minWidth: 180 }} value={tag} onChange={e => setTag(e.target.value)}>
+            <option value="">No tag (goes to Inbox)</option>
             <optgroup label="Students">
               {students.map(s => <option key={s.id} value={`student:${s.id}`}>{s.name}</option>)}
             </optgroup>
@@ -80,7 +86,7 @@ export default function QuickCapture() {
           <div style={{ flex: 1 }} />
           <button className="btn-ghost" onClick={() => setCaptureOpen(false)}>Cancel</button>
           <button className="btn-primary" onClick={submit}>
-            Capture <span style={{ opacity: 0.6, fontSize: 11, marginLeft: 4 }}>⌘↵</span>
+            Capture
           </button>
         </div>
       </div>

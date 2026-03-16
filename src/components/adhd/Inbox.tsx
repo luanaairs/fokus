@@ -27,49 +27,44 @@ export default function Inbox() {
 
   const convertToNote = async (c: Capture) => {
     await db.notes.add({
-      id: newId(),
-      content: c.content,
-      tags: c.tags,
-      studentId: c.studentId,
-      projectId: c.projectId,
-      isProgressNote: false,
-      createdAt: c.createdAt,
-      updatedAt: now(),
+      id: newId(), content: c.content, tags: c.tags,
+      studentId: c.studentId, projectId: c.projectId,
+      isProgressNote: false, createdAt: c.createdAt, updatedAt: now(),
     });
     await db.captures.update(c.id, { processed: true });
     refresh();
   };
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 800 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
-        <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Inbox</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 2 }}>Triage your captures — convert to tasks, notes, or dismiss</p>
-        </div>
+    <div style={{ padding: '32px 36px', maxWidth: 800 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Inbox</h1>
         <button className="btn-primary" onClick={() => setCaptureOpen(true)}>+ Capture</button>
       </div>
+      <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 24 }}>Triage your captures into tasks, notes, or dismiss them.</p>
 
       {captures.length === 0 ? (
-        <EmptyState icon="↓" title="Inbox zero!" description="All captures have been processed" />
+        <EmptyState icon="✓" title="Inbox zero!" description="All captures have been processed" />
       ) : (
-        <div className="flex flex-col gap-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {captures.map(c => (
-            <div key={c.id} className="card" style={{ padding: '14px 16px' }}>
-              <pre style={{ fontFamily: 'var(--font-body)', fontSize: 14, whiteSpace: 'pre-wrap', marginBottom: 8 }}>{c.content}</pre>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            <div key={c.id} className="card" style={{ padding: '18px 20px' }}>
+              <pre style={{ fontFamily: 'var(--font-body)', fontSize: 14, whiteSpace: 'pre-wrap', marginBottom: 12, lineHeight: 1.6 }}>{c.content}</pre>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
                   <span>{formatDate(c.createdAt)}</span>
-                  {c.tags.map(t => <span key={t} className="badge" style={{ background: 'var(--bg-tertiary)' }}>{t}</span>)}
+                  {c.tags.map(t => <span key={t} className="badge" style={{ fontSize: 11 }}>{t}</span>)}
                 </div>
-                <div className="flex gap-2">
-                  <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => setConverting({ capture: c, type: 'task' })}>
-                    → Task
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn-ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => setConverting({ capture: c, type: 'task' })}>
+                    Convert to Task
                   </button>
-                  <button className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }} onClick={() => convertToNote(c)}>
-                    → Note
+                  <button className="btn-ghost" style={{ fontSize: 12, padding: '5px 12px' }} onClick={() => convertToNote(c)}>
+                    Save as Note
                   </button>
-                  <button className="btn-icon" onClick={() => dismiss(c.id)} style={{ fontSize: 12, color: 'var(--text-muted)' }}>✕</button>
+                  <button className="btn-icon" onClick={() => dismiss(c.id)} style={{ color: 'var(--text-muted)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  </button>
                 </div>
               </div>
             </div>
