@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { newId, now } from '@/lib/utils';
 import type { Student, StudentGroup } from '@/types';
 import Modal from '@/components/shared/Modal';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import EmptyState from '@/components/shared/EmptyState';
 import StudentDetail from './StudentDetail';
 
@@ -21,6 +22,8 @@ export default function StudentManager() {
   const [filterTag, setFilterTag] = useState('');
   const [showGroupForm, setShowGroupForm] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'grade' | 'recent'>('name');
+  const [confirmDelete, setConfirmDelete] = useState<{ type: 'student' | 'group'; id: string; name: string } | null>(null);
 
   useEffect(() => {
     db.students.toArray().then(setStudents);
@@ -34,6 +37,12 @@ export default function StudentManager() {
     if (filterGroup && s.groupId !== filterGroup) return false;
     if (filterTag && !s.tags.includes(filterTag)) return false;
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'grade': return (a.grade || '').localeCompare(b.grade || '');
+      case 'recent': return b.createdAt - a.createdAt;
+      default: return a.name.localeCompare(b.name);
+    }
   });
 
   const selectStudent = (s: Student) => {
@@ -61,8 +70,19 @@ export default function StudentManager() {
     refresh();
   };
 
+  const deleteGroup = async (id: string) => {
+    // Unlink students from this group, then delete
+    const groupStudents = await db.students.where('groupId').equals(id).toArray();
+    for (const s of groupStudents) {
+      await db.students.update(s.id, { groupId: undefined });
+    }
+    await db.studentGroups.delete(id);
+    setFilterGroup('');
+    refresh();
+  };
+
   if (selectedStudent) {
-    return <StudentDetail student={selectedStudent} onBack={() => { setSelectedStudent(null); setActiveContext({}); }} onDelete={() => { deleteStudent(selectedStudent.id); setSelectedStudent(null); setActiveContext({}); }} />;
+    return <StudentDetail student={selectedStudent} onBack={() => { setSelectedStudent(null); setActiveContext({}); }} onDelete={() => { setConfirmDelete({ type: 'student', id: selectedStudent.id, name: selectedStudent.name }); }} />;
   }
 
   const colors = ['#e07a5f', '#2d936c', '#4a90d9', '#e6a817', '#9b59b6', '#1abc9c'];
@@ -91,6 +111,11 @@ export default function StudentManager() {
         <select className="select" style={{ width: 'auto' }} value={filterTag} onChange={e => setFilterTag(e.target.value)}>
           <option value="">All tags</option>
           {allTags.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select className="select" style={{ width: 'auto', marginLeft: 'auto' }} value={sortBy} onChange={e => setSortBy(e.target.value as 'name' | 'grade' | 'recent')}>
+          <option value="name">Sort: Name</option>
+          <option value="grade">Sort: Grade</option>
+          <option value="recent">Sort: Newest</option>
         </select>
       </div>
 
@@ -131,15 +156,47 @@ export default function StudentManager() {
         <StudentForm student={editingStudent} groups={groups} onSave={() => { setShowForm(false); refresh(); }} onCancel={() => setShowForm(false)} />
       </Modal>
 
-      <Modal open={showGroupForm} onClose={() => setShowGroupForm(false)} title="New Group">
+      <Modal open={showGroupForm} onClose={() => setShowGroupForm(false)} title="Manage Groups">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input className="input" placeholder="Group name" value={groupName} onChange={e => setGroupName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveGroup(); }} autoFocus />
+          {groups.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
+              {groups.map(g => (
+                <div key={g.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)' }}>
+                  <span style={{ fontSize: 14 }}>{g.name}</span>
+                  <button className="btn-icon" onClick={() => setConfirmDelete({ type: 'group', id: g.id, name: g.name })} style={{ color: 'var(--color-rose)', padding: 2 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <input className="input" placeholder="New group name" value={groupName} onChange={e => setGroupName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveGroup(); }} autoFocus />
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button className="btn-ghost" onClick={() => setShowGroupForm(false)}>Cancel</button>
-            <button className="btn-primary" onClick={saveGroup}>Create</button>
+            <button className="btn-ghost" onClick={() => setShowGroupForm(false)}>Close</button>
+            <button className="btn-primary" onClick={saveGroup}>Add Group</button>
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title={confirmDelete?.type === 'student' ? 'Delete Student' : 'Delete Group'}
+        message={confirmDelete?.type === 'student'
+          ? `Delete "${confirmDelete?.name}" and all their notes, tasks, and lesson plans? This cannot be undone.`
+          : `Delete group "${confirmDelete?.name}"? Students in this group will be ungrouped.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (confirmDelete?.type === 'student') {
+            deleteStudent(confirmDelete.id);
+            setSelectedStudent(null);
+            setActiveContext({});
+          } else if (confirmDelete?.type === 'group') {
+            deleteGroup(confirmDelete.id);
+          }
+          setConfirmDelete(null);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

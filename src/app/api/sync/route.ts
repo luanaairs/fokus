@@ -8,6 +8,22 @@ const TABLES = [
   'parkingLot', 'dailyStreaks',
 ] as const;
 
+// Auto-create table if it doesn't exist
+async function ensureSchema(sql: ReturnType<typeof getSQL>) {
+  if (!sql) return;
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS fokus_sync (
+        table_name TEXT PRIMARY KEY,
+        data JSONB NOT NULL DEFAULT '[]'::jsonb,
+        updated_at BIGINT NOT NULL DEFAULT 0
+      )
+    `;
+  } catch {
+    // Table may already exist, ignore
+  }
+}
+
 // GET: Pull all data from cloud
 export const GET = auth(async function GET(req) {
   if (process.env.AUTH_PASSWORD && !req.auth) {
@@ -18,6 +34,8 @@ export const GET = auth(async function GET(req) {
   if (!sql) {
     return NextResponse.json({ error: 'DATABASE_URL not configured' }, { status: 500 });
   }
+
+  await ensureSchema(sql);
 
   const rows = await sql`SELECT table_name, data, updated_at FROM fokus_sync`;
   const result: Record<string, unknown> = {};
@@ -38,6 +56,8 @@ export const POST = auth(async function POST(req) {
   if (!sql) {
     return NextResponse.json({ error: 'DATABASE_URL not configured' }, { status: 500 });
   }
+
+  await ensureSchema(sql);
 
   const body = await req.json();
   const now = Date.now();

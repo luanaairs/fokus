@@ -14,6 +14,7 @@ import ProjectManager from './ProjectManager';
 import EmptyState from '@/components/shared/EmptyState';
 
 type ViewMode = 'today' | 'upcoming' | 'project' | 'student' | 'backlog' | 'all';
+type SortMode = 'priority' | 'due' | 'title' | 'created';
 
 export default function TaskList() {
   const { refreshKey, refresh, setFocusMode, setFocusTaskId, setTimerTaskId, setTimerDuration } = useApp();
@@ -27,6 +28,7 @@ export default function TaskList() {
   const [filterStudent, setFilterStudent] = useState('');
   const [showSubtaskForm, setShowSubtaskForm] = useState<string | null>(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
+  const [sortBy, setSortBy] = useState<SortMode>('priority');
 
   useEffect(() => {
     db.projects.toArray().then(setProjects);
@@ -63,12 +65,24 @@ export default function TaskList() {
       filtered.sort((a, b) => {
         if (a.status === 'done' && b.status !== 'done') return 1;
         if (a.status !== 'done' && b.status === 'done') return -1;
-        return priorityConfig[a.priority].sortOrder - priorityConfig[b.priority].sortOrder;
+        switch (sortBy) {
+          case 'due':
+            if (!a.dueDate && !b.dueDate) return 0;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return a.dueDate - b.dueDate;
+          case 'title':
+            return a.title.localeCompare(b.title);
+          case 'created':
+            return b.createdAt - a.createdAt;
+          default:
+            return priorityConfig[a.priority].sortOrder - priorityConfig[b.priority].sortOrder;
+        }
       });
 
       setTasks(filtered);
     });
-  }, [refreshKey, view, filterProject, filterStudent]);
+  }, [refreshKey, view, filterProject, filterStudent, sortBy]);
 
   const complete = async (id: string) => {
     await completeTaskById(id);
@@ -129,6 +143,13 @@ export default function TaskList() {
             {v.label}
           </button>
         ))}
+
+        <select className="select" style={{ width: 'auto', marginLeft: 'auto', borderRadius: 'var(--radius-full)', fontSize: 12, padding: '7px 12px' }} value={sortBy} onChange={e => setSortBy(e.target.value as SortMode)}>
+          <option value="priority">Sort: Priority</option>
+          <option value="due">Sort: Due Date</option>
+          <option value="title">Sort: Title</option>
+          <option value="created">Sort: Newest</option>
+        </select>
 
         {view === 'project' && (
           <select className="select" style={{ width: 'auto', marginLeft: 8, borderRadius: 'var(--radius-full)' }} value={filterProject} onChange={e => setFilterProject(e.target.value)}>

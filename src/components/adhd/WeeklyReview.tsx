@@ -16,10 +16,13 @@ export default function WeeklyReview() {
     const day = new Date().getDay();
     const lastReview = localStorage.getItem('fokus_last_review');
     const today = new Date().toISOString().split('T')[0];
-    if (day === 5 && lastReview !== today) {
-      loadReviewData();
-      setOpen(true);
-    }
+    db.settings.get('main').then(settings => {
+      const reviewDay = settings?.weeklyReviewDay ?? 5;
+      if (day === reviewDay && lastReview !== today) {
+        loadReviewData();
+        setOpen(true);
+      }
+    });
   }, []);
 
   const loadReviewData = async () => {
