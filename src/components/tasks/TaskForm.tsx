@@ -72,7 +72,7 @@ export default function TaskForm({ task, defaults, onSave, onCancel }: Props) {
 
       <textarea className="textarea" placeholder="Description (optional)" value={description} onChange={e => setDescription(e.target.value)} rows={2} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div>
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Due date</label>
           <input type="date" className="input" value={dueDate} onChange={e => setDueDate(e.target.value)} />
@@ -88,7 +88,7 @@ export default function TaskForm({ task, defaults, onSave, onCancel }: Props) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div>
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Estimated time</label>
           <select className="select" value={estimatedMinutes} onChange={e => setEstimatedMinutes(Number(e.target.value))}>

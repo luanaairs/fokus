@@ -92,9 +92,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
   const overdueTasks = todayTasks.filter(t => t.dueDate && t.dueDate < now()).length;
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div className="page-content" style={{ padding: '32px 36px', maxWidth: 1200 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+      <div className="dash-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, marginBottom: 4 }}>
             {getGreeting()}
@@ -114,7 +114,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       </div>
 
       {/* Stat Cards Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
         <div className="stat-card-accent">
           <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Today&apos;s Tasks</div>
           <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{todayTasks.length}</div>
@@ -145,7 +145,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       </div>
 
       {/* Main Content Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
         {/* Today's Focus - Top 3 */}
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -223,7 +223,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       </div>
 
       {/* Lower Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
+      <div className="grid-main-side" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         {/* Today's Tasks Full List */}
         <div className="card" style={{ padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>

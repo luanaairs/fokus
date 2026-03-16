@@ -36,7 +36,7 @@ export default function Inbox() {
   };
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 800 }}>
+    <div className="page-content" style={{ padding: '32px 36px', maxWidth: 800 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Inbox</h1>
         <button className="btn-primary" onClick={() => setCaptureOpen(true)}>+ Capture</button>

@@ -68,8 +68,8 @@ export default function StudentManager() {
   const colors = ['#e07a5f', '#2d936c', '#4a90d9', '#e6a817', '#9b59b6', '#1abc9c'];
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+    <div className="page-content" style={{ padding: '32px 36px', maxWidth: 1000 }}>
+      <div className="header-with-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Students</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn-secondary" onClick={() => setShowGroupForm(true)}>+ Group</button>
@@ -77,7 +77,7 @@ export default function StudentManager() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
         <div style={{ position: 'relative', flex: 1, maxWidth: 280 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
             <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
@@ -97,7 +97,7 @@ export default function StudentManager() {
       {filtered.length === 0 ? (
         <EmptyState icon="👤" title="No students yet" description="Add your first student to get started" action={{ label: '+ Add Student', onClick: () => setShowForm(true) }} />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
+        <div className="grid-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 14 }}>
           {filtered.map((s, i) => (
             <div key={s.id} className="card" style={{ cursor: 'pointer', padding: 20 }} onClick={() => selectStudent(s)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 10 }}>
@@ -170,7 +170,7 @@ function StudentForm({ student, groups, onSave, onCancel }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <input className="input" placeholder="Name" value={name} onChange={e => setName(e.target.value)} autoFocus />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <input className="input" placeholder="Grade / Level" value={grade} onChange={e => setGrade(e.target.value)} />
         <input className="input" placeholder="Subject" value={subject} onChange={e => setSubject(e.target.value)} />
       </div>

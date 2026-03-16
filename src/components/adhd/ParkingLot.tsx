@@ -37,7 +37,7 @@ export default function ParkingLot() {
   };
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 700 }}>
+    <div className="page-content" style={{ padding: '32px 36px', maxWidth: 700 }}>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, marginBottom: 4 }}>Parking Lot</h1>
       <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 24 }}>
         Stray thoughts captured mid-task. Triage or clear at end of session.

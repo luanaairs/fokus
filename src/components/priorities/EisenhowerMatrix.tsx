@@ -46,13 +46,13 @@ export default function EisenhowerMatrix() {
   };
 
   return (
-    <div style={{ padding: '32px 36px' }}>
+    <div className="page-content" style={{ padding: '32px 36px' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, marginBottom: 4 }}>Priorities</h1>
         <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Eisenhower Matrix — Urgency vs Importance</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 1000 }}>
+      <div className="grid-eisenhower" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 1000 }}>
         {quadrants.map(q => (
           <div key={q.id} className="card" style={{ padding: 20, minHeight: 200 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
