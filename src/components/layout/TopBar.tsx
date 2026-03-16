@@ -11,7 +11,7 @@ export default function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) 
   const {
     activeContext, timerTaskId, timerDuration,
     setTimerTaskId, setTimerDuration, setFocusMode, setFocusTaskId,
-    refreshKey, syncStatus,
+    refreshKey, syncStatus, activeRoutine,
   } = useApp();
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [completedToday, setCompletedToday] = useState(0);
@@ -101,6 +101,29 @@ export default function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) 
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39" /></svg>
             )}
             <span>{syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'synced' ? 'Synced' : syncStatus === 'error' ? 'Sync error' : 'Offline'}</span>
+          </div>
+        )}
+        {/* Active routine indicator */}
+        {activeRoutine && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: 'var(--color-accent-light)', padding: '5px 14px',
+            borderRadius: 'var(--radius-full)', border: '1px solid var(--color-accent-muted)',
+          }}>
+            <span className="animate-pulse-slow" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-accent)' }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-accent)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {activeRoutine.routineName}
+            </span>
+            {activeRoutine.currentStep && (
+              <span style={{ fontSize: 11, color: 'var(--color-accent-hover)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {activeRoutine.currentStep}
+              </span>
+            )}
+            {activeRoutine.remainingMinutes !== undefined && (
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                {formatMinutes(activeRoutine.remainingMinutes)}
+              </span>
+            )}
           </div>
         )}
         <div style={{

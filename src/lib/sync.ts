@@ -35,6 +35,9 @@ async function getAllLocalData() {
     focusSessions: await db.focusSessions.toArray(),
     parkingLot: await db.parkingLot.toArray(),
     dailyStreaks: await db.dailyStreaks.toArray(),
+    routines: await db.routines.toArray(),
+    routineItems: await db.routineItems.toArray(),
+    routineRuns: await db.routineRuns.toArray(),
   };
 }
 
@@ -87,6 +90,7 @@ export async function pullFromCloud(): Promise<boolean> {
       'students', 'studentGroups', 'notes', 'tasks', 'projects',
       'lessonPlans', 'writingProjects', 'captures', 'focusSessions',
       'parkingLot', 'dailyStreaks',
+      'routines', 'routineItems', 'routineRuns',
     ] as const;
 
     for (const table of tables) {

@@ -11,6 +11,8 @@ import WritingProjects from '@/components/writing/WritingProjects';
 import EisenhowerMatrix from '@/components/priorities/EisenhowerMatrix';
 import Inbox from '@/components/adhd/Inbox';
 import ParkingLot from '@/components/adhd/ParkingLot';
+import RoutineManager from '@/components/routines/RoutineManager';
+import RoutineNudge from '@/components/routines/RoutineNudge';
 import QuickCapture from '@/components/adhd/QuickCapture';
 import FocusMode from '@/components/adhd/FocusMode';
 import SessionPlanner from '@/components/adhd/SessionPlanner';
@@ -62,6 +64,7 @@ function AppShell() {
       case 'students': return <StudentManager />;
       case 'writing': return <WritingProjects />;
       case 'priorities': return <EisenhowerMatrix />;
+      case 'routines': return <RoutineManager />;
       case 'inbox': return <Inbox />;
       case 'parking': return <ParkingLot />;
       default: return <Dashboard onNavigate={navigate} />;
@@ -86,6 +89,7 @@ function AppShell() {
       <SwitchWarning />
       <WeeklyReview />
       <BackupRestore open={showBackup} onClose={() => setShowBackup(false)} />
+      <RoutineNudge onStartRoutine={(id) => { setCurrentModule('routines'); }} />
     </div>
   );
 }
