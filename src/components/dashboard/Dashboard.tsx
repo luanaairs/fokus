@@ -189,7 +189,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
 
     Promise.all([
       db.tasks.toArray(),
-      db.captures.where('processed').equals(0).count(),
+      db.captures.toArray().then(all => all.filter(c => !c.processed).length),
       db.dailyStreaks.orderBy('date').reverse().limit(30).toArray(),
       db.projects.toArray(),
       db.writingProjects.where('status').anyOf('drafting', 'editing').toArray(),

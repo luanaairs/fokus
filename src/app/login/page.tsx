@@ -40,17 +40,18 @@ export default function LoginPage() {
         maxWidth: 380,
         textAlign: 'center',
       }}>
-        <div style={{
-          width: 56, height: 56, borderRadius: 16,
-          background: 'var(--color-accent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'white', fontWeight: 700, fontSize: 26,
-          fontFamily: 'var(--font-display)',
-          margin: '0 auto 20px',
-          boxShadow: '0 4px 16px rgba(224,122,95,0.3)',
-        }}>
-          f
-        </div>
+        <img
+          src="/icon.png"
+          alt="fokus"
+          width={56}
+          height={56}
+          style={{
+            borderRadius: 16,
+            margin: '0 auto 20px',
+            display: 'block',
+            boxShadow: '0 4px 16px rgba(162,56,59,0.3)',
+          }}
+        />
         <h1 style={{
           fontFamily: 'var(--font-display)',
           fontSize: 32,
