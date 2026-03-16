@@ -16,7 +16,7 @@ export default function WeeklyReview() {
     const day = new Date().getDay();
     const lastReview = localStorage.getItem('fokus_last_review');
     const today = new Date().toISOString().split('T')[0];
-    db.settings.get('main').then(settings => {
+    db.settings.get('default').then(settings => {
       const reviewDay = settings?.weeklyReviewDay ?? 5;
       if (day === reviewDay && lastReview !== today) {
         loadReviewData();
@@ -48,7 +48,7 @@ export default function WeeklyReview() {
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--color-emerald)', marginBottom: 8 }}>
             Completed This Week
           </h3>
-          <div style={{ fontSize: 32, fontWeight: 700, fontFamily: 'var(--font-display)', marginBottom: 4, color: 'var(--color-emerald)' }}>{completed.length} tasks</div>
+          <div style={{ fontSize: 32, fontFamily: 'var(--font-display)', marginBottom: 4, color: 'var(--color-emerald)' }}>{completed.length} tasks</div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>~{formatMinutes(totalMinutes)} of focused work</div>
           {completed.length > 0 && (
             <div style={{ marginTop: 12, maxHeight: 120, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>

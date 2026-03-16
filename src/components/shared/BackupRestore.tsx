@@ -83,7 +83,7 @@ export default function BackupRestore({ open, onClose }: Props) {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
             </svg>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700 }}>Export Backup</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16 }}>Export Backup</h3>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
             Download all your data as a JSON file. Includes students, tasks, projects, notes, and all other data.
@@ -100,7 +100,7 @@ export default function BackupRestore({ open, onClose }: Props) {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-sky)" strokeWidth="2" strokeLinecap="round">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
             </svg>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700 }}>Restore from Backup</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16 }}>Restore from Backup</h3>
           </div>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
             Import data from a previously exported JSON backup file.

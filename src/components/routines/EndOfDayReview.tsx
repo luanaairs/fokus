@@ -120,7 +120,7 @@ export default function EndOfDayReview() {
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: 'var(--color-emerald)', marginBottom: 8 }}>
             Completed
           </h3>
-          <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--color-emerald)', marginBottom: 4 }}>
+          <div style={{ fontSize: 28, fontFamily: 'var(--font-display)', color: 'var(--color-emerald)', marginBottom: 4 }}>
             {completed.length} steps
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>

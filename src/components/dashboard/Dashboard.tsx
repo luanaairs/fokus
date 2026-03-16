@@ -7,7 +7,7 @@ import {
   getGreeting, formatMinutes, formatDateShort,
   todayStart, todayEnd, daysFromNow, priorityConfig, now
 } from '@/lib/utils';
-import type { Task, Project, WritingProject } from '@/types';
+import type { Task, Project, WritingProject, Routine, RoutineItem } from '@/types';
 
 export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => void }) {
   const { refreshKey, refresh, setFocusMode, setFocusTaskId, setCaptureOpen } = useApp();
@@ -22,6 +22,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
   const [writingProjects, setWritingProjects] = useState<WritingProject[]>([]);
   const [totalTasks, setTotalTasks] = useState(0);
   const [totalDone, setTotalDone] = useState(0);
+  const [todayRoutines, setTodayRoutines] = useState<{ routine: Routine; itemCount: number; totalMinutes: number }[]>([]);
 
   useEffect(() => {
     const start = todayStart();
@@ -34,7 +35,23 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       db.dailyStreaks.orderBy('date').reverse().limit(30).toArray(),
       db.projects.toArray(),
       db.writingProjects.where('status').anyOf('drafting', 'editing').toArray(),
-    ]).then(([tasks, inbox, streaks, projs, wps]) => {
+      db.routines.toArray(),
+      db.routineItems.toArray(),
+    ]).then(([tasks, inbox, streaks, projs, wps, allRoutines, allRoutineItems]) => {
+      // Today's routines
+      const dayOfWeek = new Date().getDay();
+      const activeRoutines = allRoutines.filter(r =>
+        r.isActive || (r.type === 'weekly' && r.weekDays?.includes(dayOfWeek))
+      );
+      const routineData = activeRoutines.map(r => {
+        const items = allRoutineItems.filter(i => i.routineId === r.id && i.type !== 'divider');
+        return {
+          routine: r,
+          itemCount: items.length,
+          totalMinutes: items.reduce((s, i) => s + i.durationMinutes, 0),
+        };
+      });
+      setTodayRoutines(routineData);
       const active = tasks.filter(t => t.status !== 'done' && t.status !== 'deferred');
       const today = active.filter(t => t.dueDate && t.dueDate >= start && t.dueDate <= end);
       const done = tasks.filter(t => t.status === 'done' && t.completedAt && t.completedAt >= start);
@@ -117,13 +134,13 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
         <div className="stat-card-accent">
           <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.85, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Today&apos;s Tasks</div>
-          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{todayTasks.length}</div>
+          <div style={{ fontSize: 40, fontFamily: 'var(--font-display)', lineHeight: 1 }}>{todayTasks.length}</div>
           <div style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>{formatMinutes(totalTimeToday)} estimated</div>
         </div>
 
         <div className="stat-card">
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Completed Today</div>
-          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1, color: 'var(--color-emerald)' }}>{completedToday.length}</div>
+          <div style={{ fontSize: 40, fontFamily: 'var(--font-display)', lineHeight: 1, color: 'var(--color-emerald)' }}>{completedToday.length}</div>
           <div style={{ fontSize: 12, color: 'var(--color-emerald)', marginTop: 6, fontWeight: 500 }}>
             {completedToday.length > 0 ? 'Keep going!' : 'Let\'s start!'}
           </div>
@@ -131,13 +148,13 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
 
         <div className="stat-card">
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Streak</div>
-          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1, color: 'var(--color-amber)' }}>{streak}</div>
+          <div style={{ fontSize: 40, fontFamily: 'var(--font-display)', lineHeight: 1, color: 'var(--color-amber)' }}>{streak}</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{streak === 1 ? 'day' : 'days'} in a row</div>
         </div>
 
         <div className="stat-card" style={{ cursor: inboxCount > 0 ? 'pointer' : 'default' }} onClick={() => inboxCount > 0 && onNavigate('inbox')}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Inbox</div>
-          <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-display)', lineHeight: 1, color: inboxCount > 0 ? 'var(--color-accent)' : 'var(--text-muted)' }}>{inboxCount}</div>
+          <div style={{ fontSize: 40, fontFamily: 'var(--font-display)', lineHeight: 1, color: inboxCount > 0 ? 'var(--color-accent)' : 'var(--text-muted)' }}>{inboxCount}</div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
             {inboxCount > 0 ? 'items to triage' : 'all clear'}
           </div>
@@ -275,6 +292,36 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
               </div>
             )}
           </div>
+
+          {/* Today's Routines */}
+          {todayRoutines.length > 0 && (
+            <div className="card" style={{ padding: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18 }}>Routines</h3>
+                <button className="btn-icon" onClick={() => onNavigate('routines')} style={{ fontSize: 12, color: 'var(--color-accent)' }}>
+                  See all
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {todayRoutines.map(({ routine, itemCount, totalMinutes }) => (
+                  <div key={routine.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 10, fontSize: 13,
+                    padding: '8px 12px', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)',
+                    cursor: 'pointer',
+                  }} onClick={() => onNavigate('routines')}>
+                    <span style={{ color: 'var(--color-accent)', fontSize: 14 }}>◉</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 500 }}>{routine.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {itemCount} steps · {formatMinutes(totalMinutes)}
+                      </div>
+                    </div>
+                    <span className="badge" style={{ fontSize: 10 }}>{routine.timeOfDay}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Projects */}
           <div className="card" style={{ padding: 20 }}>

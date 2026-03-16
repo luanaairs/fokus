@@ -6,6 +6,7 @@ import { db, completeTaskById } from '@/lib/db';
 import { newId, now, formatMinutes, formatTimer } from '@/lib/utils';
 import type { Routine, RoutineItem, RoutineRun, RoutineRunItemState, RoutineItemStatus, Task } from '@/types';
 import Modal from '@/components/shared/Modal';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 
 interface Props {
   routineId: string;
@@ -24,6 +25,7 @@ export default function RoutineRunner({ routineId, onExit }: Props) {
   const [showInsert, setShowInsert] = useState(false);
   const [insertTitle, setInsertTitle] = useState('');
   const [insertDuration, setInsertDuration] = useState(15);
+  const [confirmExit, setConfirmExit] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load routine data
@@ -255,8 +257,8 @@ export default function RoutineRunner({ routineId, onExit }: Props) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <button className="btn-ghost" onClick={async () => { await persistRun(); onExit(); }} style={{ fontSize: 13 }}>← Exit</button>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700 }}>{routine.name}</h2>
+          <button className="btn-ghost" onClick={() => activeItemId ? setConfirmExit(true) : onExit()} style={{ fontSize: 13 }}>← Exit</button>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20 }}>{routine.name}</h2>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
             {completedItems.length}/{totalItems.length} · {formatMinutes(remainingMinutes)} remaining
           </span>
@@ -313,7 +315,7 @@ export default function RoutineRunner({ routineId, onExit }: Props) {
           {isRoutineComplete ? (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>✓</div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Routine Complete</h2>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, marginBottom: 8 }}>Routine Complete</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: 15, marginBottom: 24 }}>
                 {completedItems.length} of {totalItems.length} steps completed
               </p>
@@ -350,7 +352,7 @@ export default function RoutineRunner({ routineId, onExit }: Props) {
               </div>
 
               {/* Current step info */}
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, marginBottom: 4, textAlign: 'center' }}>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginBottom: 4, textAlign: 'center' }}>
                 {activeItem.title}
               </h2>
               {activeItem.notes && (
@@ -387,6 +389,15 @@ export default function RoutineRunner({ routineId, onExit }: Props) {
           ) : null}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmExit}
+        title="Exit Routine?"
+        message="Your progress is saved. You can resume this routine later today."
+        confirmLabel="Exit"
+        onConfirm={async () => { await persistRun(); setConfirmExit(false); onExit(); }}
+        onCancel={() => setConfirmExit(false)}
+      />
 
       {/* Insert on-the-fly modal */}
       <Modal open={showInsert} onClose={() => setShowInsert(false)} title="Quick Insert">

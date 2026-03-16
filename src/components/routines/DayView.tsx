@@ -87,7 +87,7 @@ export default function DayView({ onStartRun, onEditRoutine }: Props) {
     <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1100 }}>
       <div className="header-with-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Today</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28 }}>Today</h1>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
@@ -133,7 +133,7 @@ export default function DayView({ onStartRun, onEditRoutine }: Props) {
           {/* Time-blocked timeline */}
           {timedRoutines.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Timeline</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, marginBottom: 12 }}>Timeline</h3>
               <div style={{ position: 'relative', paddingLeft: 60 }}>
                 {HOURS.map(hour => (
                   <div key={hour} style={{
@@ -197,7 +197,7 @@ export default function DayView({ onStartRun, onEditRoutine }: Props) {
           {/* Unscheduled tasks due today */}
           {dueTasks.length > 0 && (
             <div>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, marginBottom: 12 }}>
                 Due today (unscheduled)
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -230,7 +230,7 @@ export default function DayView({ onStartRun, onEditRoutine }: Props) {
         <div>
           {flexibleRoutines.length > 0 && (
             <>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Queues</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, marginBottom: 12 }}>Queues</h3>
               {flexibleRoutines.map(r => (
                 <RoutineBlock key={r.routine.id} data={r} onStart={onStartRun} onEdit={onEditRoutine} compact />
               ))}
@@ -261,7 +261,7 @@ function RoutineBlock({ data, onStart, onEdit, compact }: {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 4 : 8 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: compact ? 14 : 16, fontWeight: 700 }}>{routine.name}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: compact ? 14 : 16 }}>{routine.name}</span>
             {!compact && (
               <span className="badge" style={{ fontSize: 10 }}>{todLabel}</span>
             )}

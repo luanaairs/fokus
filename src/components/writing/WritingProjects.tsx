@@ -42,7 +42,7 @@ export default function WritingProjects() {
   return (
     <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1000 }}>
       <div className="header-with-actions flex items-center justify-between" style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Writing Projects</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28 }}>Writing Projects</h1>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <select className="select" style={{ width: 'auto', borderRadius: 'var(--radius-full)', fontSize: 12, padding: '7px 12px' }} value={sortBy} onChange={e => setSortBy(e.target.value as 'recent' | 'title' | 'progress')}>
             <option value="recent">Sort: Recent</option>
@@ -62,7 +62,7 @@ export default function WritingProjects() {
             return (
               <div key={wp.id} className="card" style={{ cursor: 'pointer' }} onClick={() => { setSelected(wp); setActiveContext({ type: 'writing', id: wp.id, label: wp.title }); }}>
                 <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700 }}>{wp.title}</h3>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17 }}>{wp.title}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span className="badge" style={{
                       background: writingStatusConfig[wp.status].color + '22',
@@ -224,7 +224,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
 
       <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>{wp.title}</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28 }}>{wp.title}</h1>
           <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 2 }}>
             {wp.genre} · {writingStatusConfig[wp.status].label}
             {wp.deadline ? ` · Due ${formatDate(wp.deadline)}` : ''}
@@ -239,7 +239,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
 
       {/* Word Count Tracker */}
       <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, marginBottom: 12 }}>Word Count</h3>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, marginBottom: 12 }}>Word Count</h3>
         <div className="flex items-center gap-4" style={{ marginBottom: 12 }}>
           <div style={{ flex: 1 }}>
             <div className="flex justify-between" style={{ fontSize: 13, marginBottom: 4 }}>
@@ -266,7 +266,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
         {/* Notes & Research */}
         <div>
           <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700 }}>Notes & Research</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16 }}>Notes & Research</h3>
             <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => setShowNoteForm(true)}>+ Add</button>
           </div>
           <div className="flex flex-col gap-2">
@@ -287,7 +287,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
         {/* Linked Tasks */}
         <div>
           <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700 }}>Tasks</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16 }}>Tasks</h3>
             <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => setShowTaskForm(true)}>+ Add</button>
           </div>
           <div className="flex flex-col gap-2">

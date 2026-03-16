@@ -6,7 +6,7 @@ import { newId, now } from '@/lib/utils';
 import type { Project } from '@/types';
 import Modal from '@/components/shared/Modal';
 
-const PROJECT_COLORS = ['#e07a5f', '#2d936c', '#4a90d9', '#e6a817', '#9b59b6', '#1abc9c', '#e74c3c', '#34495e'];
+const PROJECT_COLORS = ['#A2383B', '#2d936c', '#6197E8', '#E2A716', '#CD9196', '#1abc9c', '#e74c3c', '#34495e'];
 
 interface Props {
   open: boolean;
