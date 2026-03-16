@@ -27,9 +27,10 @@ function NavIcon({ path }: { path: string }) {
 interface SidebarProps {
   currentModule: string;
   onNavigate: (module: string) => void;
+  onBackup?: () => void;
 }
 
-export default function Sidebar({ currentModule, onNavigate }: SidebarProps) {
+export default function Sidebar({ currentModule, onNavigate, onBackup }: SidebarProps) {
   const { setCaptureOpen, setSessionPlannerOpen, theme, toggleTheme } = useApp();
 
   return (
@@ -110,6 +111,16 @@ export default function Sidebar({ currentModule, onNavigate }: SidebarProps) {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
           Session Planner
         </button>
+        {onBackup && (
+          <button className="btn-icon" onClick={onBackup} style={{
+            width: '100%', justifyContent: 'flex-start', padding: '8px 16px', gap: 10, display: 'flex', fontSize: 13, color: 'var(--text-muted)',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Backup & Restore
+          </button>
+        )}
         <button className="btn-icon" onClick={toggleTheme} style={{
           width: '100%', justifyContent: 'flex-start', padding: '8px 16px', gap: 10, display: 'flex', fontSize: 13, color: 'var(--text-muted)',
         }}>

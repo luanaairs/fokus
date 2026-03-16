@@ -163,3 +163,29 @@ export async function exportAllData(): Promise<string> {
   };
   return JSON.stringify(data, null, 2);
 }
+
+export async function importAllData(json: string, mode: 'merge' | 'replace'): Promise<{ counts: Record<string, number> }> {
+  const data = JSON.parse(json);
+  const tables = [
+    'students', 'studentGroups', 'notes', 'tasks', 'projects',
+    'lessonPlans', 'writingProjects', 'captures', 'focusSessions',
+    'parkingLot', 'dailyStreaks',
+  ] as const;
+
+  if (mode === 'replace') {
+    for (const table of tables) {
+      await (db[table] as unknown as { clear: () => Promise<void> }).clear();
+    }
+  }
+
+  const counts: Record<string, number> = {};
+  for (const table of tables) {
+    const items = data[table];
+    if (Array.isArray(items) && items.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db[table] as any).bulkPut(items);
+      counts[table] = items.length;
+    }
+  }
+  return { counts };
+}
