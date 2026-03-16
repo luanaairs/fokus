@@ -25,6 +25,7 @@ export default function TaskForm({ task, defaults, onSave, onCancel }: Props) {
   const [status, setStatus] = useState<TaskStatus>(task?.status || 'todo');
   const [isRecurring, setIsRecurring] = useState(task?.isRecurring || false);
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrenceType || 'weekly');
+  const [recurrenceInterval, setRecurrenceInterval] = useState(task?.recurrenceInterval || 7);
   const [parentTaskId] = useState(task?.parentTaskId || defaults?.parentTaskId || '');
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -56,6 +57,7 @@ export default function TaskForm({ task, defaults, onSave, onCancel }: Props) {
       parentTaskId: parentTaskId || undefined,
       isRecurring,
       recurrenceType: isRecurring ? recurrenceType : undefined,
+      recurrenceInterval: isRecurring && recurrenceType === 'custom' ? recurrenceInterval : undefined,
       completedAt: task?.completedAt,
       deferredUntil: task?.deferredUntil,
       createdAt: task?.createdAt || now(),
@@ -140,11 +142,20 @@ export default function TaskForm({ task, defaults, onSave, onCancel }: Props) {
         Recurring task
       </label>
       {isRecurring && (
-        <select className="select" value={recurrenceType} onChange={e => setRecurrenceType(e.target.value as RecurrenceType)} style={{ width: 'auto' }}>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="custom">Custom</option>
-        </select>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <select className="select" value={recurrenceType} onChange={e => setRecurrenceType(e.target.value as RecurrenceType)} style={{ width: 'auto' }}>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="custom">Custom</option>
+          </select>
+          {recurrenceType === 'custom' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Every</span>
+              <input type="number" className="input" min={1} max={365} value={recurrenceInterval} onChange={e => setRecurrenceInterval(Number(e.target.value))} style={{ width: 70 }} />
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>days</span>
+            </div>
+          )}
+        </div>
       )}
 
       <div className="flex gap-3 justify-end" style={{ marginTop: 8 }}>

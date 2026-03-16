@@ -6,6 +6,7 @@ import { db, completeTaskById, uncompleteTaskById } from '@/lib/db';
 import { newId, now, formatDate, toDateInputValue, fromDateInput, writingStatusConfig } from '@/lib/utils';
 import type { WritingProject, WritingStatus, Note, Task } from '@/types';
 import Modal from '@/components/shared/Modal';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import TaskForm from '@/components/tasks/TaskForm';
 import EmptyState from '@/components/shared/EmptyState';
 
@@ -15,10 +16,24 @@ export default function WritingProjects() {
   const [selected, setSelected] = useState<WritingProject | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<WritingProject | undefined>();
+  const [sortBy, setSortBy] = useState<'recent' | 'title' | 'progress'>('recent');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<WritingProject | null>(null);
 
   useEffect(() => {
-    db.writingProjects.toArray().then(wps => setProjects(wps.sort((a, b) => b.updatedAt - a.updatedAt)));
-  }, [refreshKey]);
+    db.writingProjects.toArray().then(wps => {
+      const sorted = [...wps];
+      switch (sortBy) {
+        case 'title': sorted.sort((a, b) => a.title.localeCompare(b.title)); break;
+        case 'progress': sorted.sort((a, b) => {
+          const pa = a.wordCountGoal > 0 ? a.currentWordCount / a.wordCountGoal : 0;
+          const pb = b.wordCountGoal > 0 ? b.currentWordCount / b.wordCountGoal : 0;
+          return pb - pa;
+        }); break;
+        default: sorted.sort((a, b) => b.updatedAt - a.updatedAt);
+      }
+      setProjects(sorted);
+    });
+  }, [refreshKey, sortBy]);
 
   if (selected) {
     return <WritingDetail project={selected} onBack={() => { setSelected(null); setActiveContext({}); }} />;
@@ -28,7 +43,14 @@ export default function WritingProjects() {
     <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1000 }}>
       <div className="header-with-actions flex items-center justify-between" style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Writing Projects</h1>
-        <button className="btn-primary" onClick={() => { setEditing(undefined); setShowForm(true); }}>+ New Project</button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <select className="select" style={{ width: 'auto', borderRadius: 'var(--radius-full)', fontSize: 12, padding: '7px 12px' }} value={sortBy} onChange={e => setSortBy(e.target.value as 'recent' | 'title' | 'progress')}>
+            <option value="recent">Sort: Recent</option>
+            <option value="title">Sort: Title</option>
+            <option value="progress">Sort: Progress</option>
+          </select>
+          <button className="btn-primary" onClick={() => { setEditing(undefined); setShowForm(true); }}>+ New Project</button>
+        </div>
       </div>
 
       {projects.length === 0 ? (
@@ -41,10 +63,18 @@ export default function WritingProjects() {
               <div key={wp.id} className="card" style={{ cursor: 'pointer' }} onClick={() => { setSelected(wp); setActiveContext({ type: 'writing', id: wp.id, label: wp.title }); }}>
                 <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>
                   <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700 }}>{wp.title}</h3>
-                  <span className="badge" style={{
-                    background: writingStatusConfig[wp.status].color + '22',
-                    color: writingStatusConfig[wp.status].color,
-                  }}>{writingStatusConfig[wp.status].label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="badge" style={{
+                      background: writingStatusConfig[wp.status].color + '22',
+                      color: writingStatusConfig[wp.status].color,
+                    }}>{writingStatusConfig[wp.status].label}</span>
+                    <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setEditing(wp); setShowForm(true); }} style={{ fontSize: 11, padding: 4 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                    </button>
+                    <button className="btn-icon" onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(wp); }} style={{ fontSize: 11, padding: 4, color: 'var(--color-rose)' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                    </button>
+                  </div>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>
                   {wp.genre}{wp.deadline ? ` · Due ${formatDate(wp.deadline)}` : ''}
@@ -69,6 +99,21 @@ export default function WritingProjects() {
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editing ? 'Edit Writing Project' : 'New Writing Project'}>
         <WritingForm project={editing} onSave={() => { setShowForm(false); refresh(); }} onCancel={() => setShowForm(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete Writing Project"
+        message={`Delete "${confirmDeleteId?.title}"? This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          if (confirmDeleteId) {
+            await db.writingProjects.delete(confirmDeleteId.id);
+            refresh();
+          }
+          setConfirmDeleteId(null);
+        }}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }
@@ -228,7 +273,12 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
             {notes.map(n => (
               <div key={n.id} className="card" style={{ padding: '10px 12px' }}>
                 <pre style={{ fontFamily: 'var(--font-body)', fontSize: 13, whiteSpace: 'pre-wrap' }}>{n.content}</pre>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>{formatDate(n.createdAt)}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatDate(n.createdAt)}</span>
+                  <button className="btn-icon" onClick={async () => { await db.notes.delete(n.id); refresh(); }} style={{ color: 'var(--color-rose)', padding: 2 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

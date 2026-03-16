@@ -144,6 +144,9 @@ export default function StudentDetail({ student, onBack, onDelete }: { student: 
                 <div className="flex items-center gap-2" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                   <span>{formatDate(n.createdAt)}</span>
                   {n.tags.map(t => <span key={t} className="badge" style={{ background: 'var(--bg-tertiary)' }}>{t}</span>)}
+                  <button className="btn-icon" onClick={async () => { await db.notes.delete(n.id); refresh(); }} style={{ marginLeft: 'auto', color: 'var(--color-rose)', padding: 2 }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  </button>
                 </div>
               </div>
             ))}
@@ -192,6 +195,7 @@ export default function StudentDetail({ student, onBack, onDelete }: { student: 
                     }}>{lessonStatusConfig[l.status].label}</span>
                     <button className="btn-icon" style={{ fontSize: 11 }} onClick={() => cloneLesson(l)}>Clone</button>
                     <button className="btn-icon" style={{ fontSize: 11 }} onClick={() => { setEditingLesson(l); setShowLessonForm(true); }}>Edit</button>
+                    <button className="btn-icon" style={{ fontSize: 11, color: 'var(--color-rose)' }} onClick={async () => { await db.lessonPlans.delete(l.id); refresh(); }}>Delete</button>
                   </div>
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4 }}>{formatDate(l.date)}</div>
@@ -228,7 +232,12 @@ export default function StudentDetail({ student, onBack, onDelete }: { student: 
                   background: 'var(--color-accent)',
                 }} />
                 <div className="card" style={{ marginLeft: 12 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>{formatDate(n.createdAt)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatDate(n.createdAt)}</span>
+                    <button className="btn-icon" onClick={async () => { await db.notes.delete(n.id); refresh(); }} style={{ color: 'var(--color-rose)', padding: 2 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                    </button>
+                  </div>
                   <pre style={{ fontFamily: 'var(--font-body)', fontSize: 14, whiteSpace: 'pre-wrap' }}>{n.content}</pre>
                 </div>
               </div>

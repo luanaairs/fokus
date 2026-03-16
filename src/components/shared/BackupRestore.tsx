@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { useApp } from '@/lib/context';
 import { exportAllData, importAllData } from '@/lib/db';
 import Modal from './Modal';
+import ConfirmDialog from './ConfirmDialog';
 
 interface Props {
   open: boolean;
@@ -16,6 +17,7 @@ export default function BackupRestore({ open, onClose }: Props) {
   const [mode, setMode] = useState<'merge' | 'replace'>('merge');
   const [status, setStatus] = useState<'idle' | 'exporting' | 'importing' | 'done' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const handleExport = async () => {
     setStatus('exporting');
@@ -58,7 +60,12 @@ export default function BackupRestore({ open, onClose }: Props) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) handleImport(file);
+    if (!file) return;
+    if (mode === 'replace') {
+      setPendingFile(file);
+    } else {
+      handleImport(file);
+    }
   };
 
   const reset = () => {
@@ -142,6 +149,21 @@ export default function BackupRestore({ open, onClose }: Props) {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!pendingFile}
+        title="Replace All Data"
+        message="This will delete ALL current data and replace it with the backup file. This cannot be undone. Are you sure?"
+        confirmLabel="Replace All"
+        onConfirm={() => {
+          if (pendingFile) handleImport(pendingFile);
+          setPendingFile(null);
+        }}
+        onCancel={() => {
+          setPendingFile(null);
+          if (fileRef.current) fileRef.current.value = '';
+        }}
+      />
     </Modal>
   );
 }
