@@ -426,6 +426,11 @@
   50% { opacity: 0.5; }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-pulse-slow {
   animation: pulse 2s ease-in-out infinite;
 }

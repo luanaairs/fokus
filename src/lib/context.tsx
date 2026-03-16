@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { AppSettings } from '@/types';
 import { db, getSettings, updateSettings } from '@/lib/db';
+import { initSync, schedulePush, onSyncStatus, type SyncStatus } from '@/lib/sync';
 
 interface ActiveContext {
   type?: 'student' | 'project' | 'writing';
@@ -32,6 +33,7 @@ interface AppContextType {
   toggleTheme: () => void;
   switchWarning: { show: boolean; taskTitle: string; onContinue: () => void } | null;
   setSwitchWarning: (w: { show: boolean; taskTitle: string; onContinue: () => void } | null) => void;
+  syncStatus: SyncStatus;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -48,15 +50,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [timerDuration, setTimerDuration] = useState(0);
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [switchWarning, setSwitchWarning] = useState<{ show: boolean; taskTitle: string; onContinue: () => void } | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
 
   useEffect(() => {
     getSettings().then(s => {
       setSettingsState(s);
       setTheme(s.theme);
     });
+    // Initialize cloud sync and listen for status changes
+    initSync().then(() => setRefreshKey(k => k + 1));
+    return onSyncStatus(setSyncStatus);
   }, []);
 
-  const refresh = useCallback(() => setRefreshKey(k => k + 1), []);
+  const refresh = useCallback(() => {
+    setRefreshKey(k => k + 1);
+    schedulePush(); // Auto-sync to cloud after any data change
+  }, []);
 
   const toggleTheme = useCallback(async () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -80,6 +89,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       timerDuration, setTimerDuration,
       theme, toggleTheme,
       switchWarning, setSwitchWarning,
+      syncStatus,
     }}>
       {children}
     </AppContext.Provider>
