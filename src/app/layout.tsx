@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: "fokus - @luanaairs",
   description: "A personal productivity command center",
   icons: {
-    icon: '/icon.png',
-    apple: '/icon.png',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
   },
 };
 
