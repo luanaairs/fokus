@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { AppProvider, useApp } from '@/lib/context';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
@@ -19,13 +19,28 @@ import FocusMode from '@/components/adhd/FocusMode';
 import SessionPlanner from '@/components/adhd/SessionPlanner';
 import SwitchWarning from '@/components/adhd/SwitchWarning';
 import WeeklyReview from '@/components/adhd/WeeklyReview';
+import PomodoroMode from '@/components/adhd/PomodoroMode';
+import TaskRoulette from '@/components/adhd/TaskRoulette';
+import PerfectionChallenge from '@/components/adhd/PerfectionChallenge';
+import TransitionPrompt from '@/components/adhd/TransitionPrompt';
+import WeeklyReviewWizard from '@/components/adhd/WeeklyReviewWizard';
 import { useKeyboard } from '@/hooks/useKeyboard';
 import { exportAllData } from '@/lib/db';
 
 function AppShell() {
   const [currentModule, setCurrentModule] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { setCaptureOpen, timerTaskId, setSwitchWarning } = useApp();
+  const { setCaptureOpen, timerTaskId, setSwitchWarning, setFocusMode, setFocusTaskId } = useApp();
+
+  // New feature state
+  const [pomodoroOpen, setPomodoroOpen] = useState(false);
+  const [pomodoroTaskId, setPomodoroTaskId] = useState<string | undefined>();
+  const [rouletteOpen, setRouletteOpen] = useState(false);
+  const [perfectionOpen, setPerfectionOpen] = useState(false);
+  const [perfectionTaskId, setPerfectionTaskId] = useState('');
+  const [weeklyReviewWizardOpen, setWeeklyReviewWizardOpen] = useState(false);
+  const [transition, setTransition] = useState<{ from: string; to: string } | null>(null);
+  const previousModule = useRef(currentModule);
 
   const handleCapture = useCallback(() => setCaptureOpen(true), [setCaptureOpen]);
   useKeyboard('k', handleCapture);
@@ -36,9 +51,15 @@ function AppShell() {
       setSwitchWarning({
         show: true,
         taskTitle: 'current task',
-        onContinue: () => setCurrentModule(module),
+        onContinue: () => {
+          previousModule.current = currentModule;
+          setTransition({ from: currentModule, to: module });
+          setCurrentModule(module);
+        },
       });
-    } else {
+    } else if (module !== currentModule) {
+      previousModule.current = currentModule;
+      setTransition({ from: currentModule, to: module });
       setCurrentModule(module);
     }
   }, [timerTaskId, currentModule, setSwitchWarning]);
@@ -58,7 +79,13 @@ function AppShell() {
 
   const renderModule = () => {
     switch (currentModule) {
-      case 'dashboard': return <Dashboard onNavigate={navigate} />;
+      case 'dashboard': return <Dashboard
+        onNavigate={navigate}
+        onOpenPomodoro={(taskId?: string) => { setPomodoroTaskId(taskId); setPomodoroOpen(true); }}
+        onOpenRoulette={() => setRouletteOpen(true)}
+        onOpenPerfection={(taskId: string) => { setPerfectionTaskId(taskId); setPerfectionOpen(true); }}
+        onOpenWeeklyReview={() => setWeeklyReviewWizardOpen(true)}
+      />;
       case 'tasks': return <TaskList />;
       case 'routines': return <RoutineManager />;
       case 'students': return <StudentManager />;
@@ -75,7 +102,12 @@ function AppShell() {
     <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
       {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
       <div className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        <Sidebar currentModule={currentModule} onNavigate={navigate} />
+        <Sidebar
+          currentModule={currentModule}
+          onNavigate={navigate}
+          onOpenPomodoro={() => { setPomodoroTaskId(undefined); setPomodoroOpen(true); }}
+          onOpenRoulette={() => setRouletteOpen(true)}
+        />
       </div>
       <div className="flex flex-col" style={{ flex: 1, overflow: 'hidden' }}>
         <TopBar onMenuToggle={() => setSidebarOpen(o => !o)} />
@@ -89,6 +121,21 @@ function AppShell() {
       <SwitchWarning />
       <WeeklyReview />
       <RoutineNudge onStartRoutine={() => setCurrentModule('routines')} />
+      <PomodoroMode open={pomodoroOpen} onClose={() => setPomodoroOpen(false)} taskId={pomodoroTaskId} />
+      <TaskRoulette
+        open={rouletteOpen}
+        onClose={() => setRouletteOpen(false)}
+        onSelectTask={(task) => { setFocusTaskId(task.id); setFocusMode(true); }}
+      />
+      <PerfectionChallenge open={perfectionOpen} onClose={() => setPerfectionOpen(false)} taskId={perfectionTaskId} />
+      <WeeklyReviewWizard open={weeklyReviewWizardOpen} onClose={() => setWeeklyReviewWizardOpen(false)} />
+      {transition && (
+        <TransitionPrompt
+          from={transition.from}
+          to={transition.to}
+          onComplete={() => setTransition(null)}
+        />
+      )}
     </div>
   );
 }

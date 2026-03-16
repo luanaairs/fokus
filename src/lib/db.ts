@@ -3,7 +3,8 @@ import type {
   Student, StudentGroup, Note, Task, Project,
   LessonPlan, WritingProject, Capture, FocusSession,
   ParkingLotItem, DailyStreak, AppSettings,
-  Routine, RoutineItem, RoutineRun
+  Routine, RoutineItem, RoutineRun,
+  UserXP, PomodoroSession
 } from '@/types';
 
 class FokusDB extends Dexie {
@@ -22,6 +23,8 @@ class FokusDB extends Dexie {
   routines!: EntityTable<Routine, 'id'>;
   routineItems!: EntityTable<RoutineItem, 'id'>;
   routineRuns!: EntityTable<RoutineRun, 'id'>;
+  userXP!: EntityTable<UserXP, 'id'>;
+  pomodoroSessions!: EntityTable<PomodoroSession, 'id'>;
 
   constructor() {
     super('fokus');
@@ -55,6 +58,25 @@ class FokusDB extends Dexie {
       routines: 'id, type, timeOfDay, isActive, isTemplate, createdAt',
       routineItems: 'id, routineId, type, linkedTaskId, sortOrder, createdAt',
       routineRuns: 'id, routineId, date, startedAt',
+    });
+    this.version(3).stores({
+      students: 'id, name, grade, subject, *tags, groupId, createdAt',
+      studentGroups: 'id, name',
+      notes: 'id, studentId, projectId, writingProjectId, isProgressNote, createdAt, *tags',
+      tasks: 'id, status, priority, dueDate, projectId, studentId, writingProjectId, parentTaskId, createdAt',
+      projects: 'id, name, isTeaching, createdAt',
+      lessonPlans: 'id, studentId, groupId, status, date, createdAt',
+      writingProjects: 'id, title, status, createdAt',
+      captures: 'id, processed, createdAt',
+      focusSessions: 'id, taskId, startedAt',
+      parkingLot: 'id, processed, createdAt',
+      dailyStreaks: 'id, date',
+      settings: 'id',
+      routines: 'id, type, timeOfDay, isActive, isTemplate, createdAt',
+      routineItems: 'id, routineId, type, linkedTaskId, sortOrder, createdAt',
+      routineRuns: 'id, routineId, date, startedAt',
+      userXP: 'id',
+      pomodoroSessions: 'id, taskId, type, completedAt',
     });
   }
 }
@@ -161,11 +183,83 @@ export async function completeTaskById(id: string): Promise<void> {
   if (task.isRecurring) {
     await handleRecurringTask(task);
   }
+  // Award XP based on priority
+  const xp = await getUserXP();
+  let amount = XP_VALUES.taskComplete;
+  if (task.priority === 'critical') amount = XP_VALUES.criticalTask;
+  else if (task.priority === 'high') amount = XP_VALUES.highTask;
+  const newAchievements = [...xp.achievements];
+  const newCount = xp.tasksCompleted + 1;
+  if (newCount === 1 && !newAchievements.includes('first_task')) newAchievements.push('first_task');
+  if (newCount >= 10 && !newAchievements.includes('ten_tasks')) newAchievements.push('ten_tasks');
+  if (newCount >= 50 && !newAchievements.includes('fifty_tasks')) newAchievements.push('fifty_tasks');
+  if (newCount >= 100 && !newAchievements.includes('hundred_tasks')) newAchievements.push('hundred_tasks');
+  await awardXP(amount, { tasksCompleted: newCount, achievements: newAchievements });
 }
 
 export async function uncompleteTaskById(id: string): Promise<void> {
   await db.tasks.update(id, { status: 'todo', completedAt: undefined });
 }
+
+// --- XP / Gamification ---
+
+const XP_VALUES = {
+  taskComplete: 10,
+  criticalTask: 25,
+  highTask: 15,
+  routineComplete: 30,
+  pomodoroComplete: 15,
+  streakBonus: 5, // per day of streak
+  perfectionChallenge: 20,
+};
+
+const LEVEL_THRESHOLDS = [0, 50, 150, 300, 500, 800, 1200, 1700, 2400, 3200, 4200, 5500, 7000, 9000, 11500, 15000];
+
+export function getLevelFromXP(xp: number): number {
+  for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+    if (xp >= LEVEL_THRESHOLDS[i]) return i + 1;
+  }
+  return 1;
+}
+
+export function getXPForNextLevel(level: number): number {
+  return LEVEL_THRESHOLDS[level] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + 2000;
+}
+
+export function getXPForCurrentLevel(level: number): number {
+  return LEVEL_THRESHOLDS[level - 1] || 0;
+}
+
+export async function getUserXP(): Promise<import('@/types').UserXP> {
+  let xp = await db.userXP.get('default');
+  if (!xp) {
+    xp = {
+      id: 'default', totalXP: 0, level: 1,
+      tasksCompleted: 0, routinesCompleted: 0, focusMinutes: 0,
+      currentStreak: 0, longestStreak: 0, achievements: [],
+      updatedAt: Date.now(),
+    };
+    await db.userXP.put(xp);
+  }
+  return xp;
+}
+
+export async function awardXP(amount: number, updates?: Partial<import('@/types').UserXP>): Promise<import('@/types').UserXP> {
+  const xp = await getUserXP();
+  const newTotal = xp.totalXP + amount;
+  const newLevel = getLevelFromXP(newTotal);
+  const merged = {
+    ...xp,
+    ...updates,
+    totalXP: newTotal,
+    level: newLevel,
+    updatedAt: Date.now(),
+  };
+  await db.userXP.put(merged);
+  return merged;
+}
+
+export { XP_VALUES };
 
 export async function exportAllData(): Promise<string> {
   const data = {
@@ -183,6 +277,8 @@ export async function exportAllData(): Promise<string> {
     routines: await db.routines.toArray(),
     routineItems: await db.routineItems.toArray(),
     routineRuns: await db.routineRuns.toArray(),
+    userXP: await db.userXP.toArray(),
+    pomodoroSessions: await db.pomodoroSessions.toArray(),
     exportedAt: new Date().toISOString(),
   };
   return JSON.stringify(data, null, 2);
@@ -195,6 +291,7 @@ export async function importAllData(json: string, mode: 'merge' | 'replace'): Pr
     'lessonPlans', 'writingProjects', 'captures', 'focusSessions',
     'parkingLot', 'dailyStreaks',
     'routines', 'routineItems', 'routineRuns',
+    'userXP', 'pomodoroSessions',
   ] as const;
 
   if (mode === 'replace') {

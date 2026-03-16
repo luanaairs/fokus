@@ -167,7 +167,18 @@ function QuoteBanner() {
   );
 }
 
-export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => void }) {
+import XPWidget from '@/components/dashboard/XPWidget';
+import DoomPileDetector from '@/components/adhd/DoomPileDetector';
+
+interface DashboardProps {
+  onNavigate: (m: string) => void;
+  onOpenPomodoro?: (taskId?: string) => void;
+  onOpenRoulette?: () => void;
+  onOpenPerfection?: (taskId: string) => void;
+  onOpenWeeklyReview?: () => void;
+}
+
+export default function Dashboard({ onNavigate, onOpenPomodoro, onOpenRoulette, onOpenPerfection, onOpenWeeklyReview }: DashboardProps) {
   const { refreshKey, refresh, setFocusMode, setFocusTaskId, setCaptureOpen } = useApp();
   const [todayTasks, setTodayTasks] = useState<Task[]>([]);
   const [completedToday, setCompletedToday] = useState<Task[]>([]);
@@ -278,12 +289,18 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn-primary" onClick={() => setCaptureOpen(true)}>
-            + Quick Capture
+            + Capture
           </button>
-          <button className="btn-secondary" onClick={() => onNavigate('tasks')}>
-            View All Tasks
+          <button className="btn-ghost" onClick={() => onOpenPomodoro?.()}>
+            🍅 Pomodoro
+          </button>
+          <button className="btn-ghost" onClick={() => onOpenRoulette?.()}>
+            🎰 Roulette
+          </button>
+          <button className="btn-ghost" onClick={() => onOpenWeeklyReview?.()}>
+            📋 Review
           </button>
         </div>
       </div>
@@ -357,6 +374,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
                       <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{formatMinutes(t.estimatedMinutes)}</span>
                     )}
                   </div>
+                  <button className="btn-icon" onClick={() => onOpenPerfection?.(t.id)} title="15min Challenge" style={{ color: 'var(--color-amber)' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>
+                  </button>
                   <button className="btn-icon" onClick={() => focusTask(t)} title="Focus" style={{ color: 'var(--color-accent)' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="3" /></svg>
                   </button>
@@ -436,6 +456,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
 
         {/* Right Sidebar Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* XP & Level */}
+          <XPWidget />
+
           {/* Upcoming */}
           <div className="card" style={{ padding: 20 }}>
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 12 }}>Upcoming</h3>
@@ -540,6 +563,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
               </div>
             </div>
           )}
+
+          {/* Doom Pile */}
+          <DoomPileDetector onNavigateToTasks={() => onNavigate('tasks')} />
         </div>
       </div>
     </div>
