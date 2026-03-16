@@ -1,13 +1,171 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useApp } from '@/lib/context';
 import { db, completeTaskById } from '@/lib/db';
 import {
-  getGreeting, formatMinutes, formatDateShort,
+  formatMinutes, formatDateShort,
   todayStart, todayEnd, daysFromNow, priorityConfig, now
 } from '@/lib/utils';
 import type { Task, Project, WritingProject, Routine, RoutineItem } from '@/types';
+
+interface QuoteSlide {
+  lines: string[];
+  attribution: string;
+  crossedAttribution?: string;
+  imageSrc?: string; // path to character image in /public
+}
+
+const QUOTES: QuoteSlide[] = [
+  {
+    lines: [
+      'If you want to make the world a better place,',
+      'Take a look at yourself and make a change.',
+      'Hooo',
+    ],
+    crossedAttribution: 'MICHAEL JACKSON',
+    attribution: 'BATMAN',
+    imageSrc: '/quotes/batman.png',
+  },
+];
+
+function QuoteBanner() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [fadeClass, setFadeClass] = useState<'in' | 'out'>('in');
+
+  const nextSlide = useCallback(() => {
+    if (QUOTES.length <= 1) return;
+    setFadeClass('out');
+    setTimeout(() => {
+      setActiveIndex(i => (i + 1) % QUOTES.length);
+      setFadeClass('in');
+    }, 400);
+  }, []);
+
+  useEffect(() => {
+    if (QUOTES.length <= 1) return;
+    const interval = setInterval(nextSlide, 10000);
+    return () => clearInterval(interval);
+  }, [nextSlide]);
+
+  const slide = QUOTES[activeIndex];
+
+  return (
+    <div style={{
+      position: 'relative',
+      borderRadius: 'var(--radius-xl)',
+      overflow: 'hidden',
+      marginBottom: 28,
+      minHeight: 180,
+      background: 'linear-gradient(135deg, #1a1206 0%, #3d2008 25%, #5c3a1a 50%, #2a1a0a 75%, #0f0d1a 100%)',
+      boxShadow: 'var(--shadow-lg)',
+    }}>
+      {/* Atmospheric overlay — warm cloudy glow */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at 30% 80%, rgba(180, 120, 60, 0.35) 0%, transparent 60%), radial-gradient(ellipse at 70% 20%, rgba(40, 20, 60, 0.4) 0%, transparent 50%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: 180,
+        padding: '32px 40px',
+        opacity: fadeClass === 'in' ? 1 : 0,
+        transition: 'opacity 0.4s ease',
+      }}>
+        {/* Quote text — left side */}
+        <div style={{ flex: 1, zIndex: 1 }}>
+          <div style={{ marginBottom: 16 }}>
+            {slide.lines.map((line, i) => (
+              <p key={i} style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: i === slide.lines.length - 1 ? 20 : 17,
+                color: '#f0e8d8',
+                lineHeight: 1.7,
+                letterSpacing: '0.03em',
+                textAlign: 'center',
+                textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+              }}>
+                {i === 0 ? '\u201C' : ''}{line}{i === slide.lines.length - 1 ? '\u201D' : ''}
+              </p>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            {slide.crossedAttribution && (
+              <span style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 13,
+                color: 'rgba(240, 232, 216, 0.5)',
+                textDecoration: 'line-through',
+                letterSpacing: '0.1em',
+                marginRight: 10,
+              }}>
+                ~ {slide.crossedAttribution}
+              </span>
+            )}
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 14,
+              color: 'rgba(240, 232, 216, 0.85)',
+              letterSpacing: '0.12em',
+            }}>
+              - {slide.attribution}
+            </span>
+          </div>
+        </div>
+
+        {/* Character image — right side, overlapping top */}
+        <div style={{
+          position: 'absolute',
+          right: 32,
+          bottom: 0,
+          top: -24,
+          width: 160,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          {slide.imageSrc && (
+            <img
+              src={slide.imageSrc}
+              alt=""
+              style={{
+                maxHeight: '110%',
+                width: 'auto',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))',
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Carousel dots */}
+      {QUOTES.length > 1 && (
+        <div style={{
+          position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', gap: 8,
+        }}>
+          {QUOTES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => { setFadeClass('out'); setTimeout(() => { setActiveIndex(i); setFadeClass('in'); }, 400); }}
+              style={{
+                width: 8, height: 8, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: i === activeIndex ? 'rgba(240, 232, 216, 0.9)' : 'rgba(240, 232, 216, 0.3)',
+                transition: 'background 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => void }) {
   const { refreshKey, refresh, setFocusMode, setFocusTaskId, setCaptureOpen } = useApp();
@@ -114,7 +272,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
       <div className="dash-header" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 36, marginBottom: 4 }}>
-            {getGreeting()}
+            Let&apos;s eat the fucking frog!
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -129,6 +287,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (m: string) => v
           </button>
         </div>
       </div>
+
+      {/* Quote Banner */}
+      <QuoteBanner />
 
       {/* Stat Cards Row */}
       <div className="stat-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
