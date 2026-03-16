@@ -41,7 +41,7 @@ export default function LoginPage() {
         textAlign: 'center',
       }}>
         <img
-          src="/icon.png"
+          src="/public/icon.png"
           alt="fokus"
           width={56}
           height={56}
