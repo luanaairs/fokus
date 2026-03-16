@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
-import { db } from '@/lib/db';
-import { formatTimer, now } from '@/lib/utils';
+import { db, completeTaskById, recordFocusSession } from '@/lib/db';
+import { formatTimer } from '@/lib/utils';
 import { useTimer } from '@/hooks/useTimer';
 import type { Task } from '@/types';
 
@@ -28,14 +28,19 @@ export default function FocusMode() {
   if (!focusMode || !task) return null;
 
   const completeTask = async () => {
-    await db.tasks.update(task.id, { status: 'done', completedAt: now() });
+    const elapsed = (task.estimatedMinutes * 60 || 25 * 60) - timer.secondsLeft;
+    await completeTaskById(task.id);
+    if (elapsed > 0) await recordFocusSession(task.id, elapsed);
     timer.stop();
     setFocusMode(false);
     setFocusTaskId(null);
     refresh();
   };
 
-  const exitFocus = () => {
+  const exitFocus = async () => {
+    const totalDuration = task.estimatedMinutes * 60 || 25 * 60;
+    const elapsed = totalDuration - timer.secondsLeft;
+    if (elapsed > 30) await recordFocusSession(task.id, elapsed);
     timer.stop();
     setFocusMode(false);
     setFocusTaskId(null);

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
-import { db } from '@/lib/db';
+import { db, completeTaskById, uncompleteTaskById } from '@/lib/db';
 import { newId, now, formatDate, toDateInputValue, fromDateInput, writingStatusConfig } from '@/lib/utils';
 import type { WritingProject, WritingStatus, Note, Task } from '@/types';
 import Modal from '@/components/shared/Modal';
@@ -244,7 +244,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
             {tasks.map(t => (
               <div key={t.id} className="flex items-center gap-2 card" style={{ padding: '8px 12px' }}>
                 <button className="btn-icon" onClick={async () => {
-                  await db.tasks.update(t.id, { status: t.status === 'done' ? 'todo' : 'done', completedAt: t.status === 'done' ? undefined : now() });
+                  if (t.status === 'done') { await uncompleteTaskById(t.id); } else { await completeTaskById(t.id); }
                   refresh();
                 }} style={{ color: t.status === 'done' ? 'var(--color-emerald)' : 'var(--text-muted)' }}>
                   {t.status === 'done' ? '✓' : '○'}

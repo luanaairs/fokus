@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
-import { db } from '@/lib/db';
-import { priorityConfig, now as nowFn, formatMinutes } from '@/lib/utils';
+import { db, completeTaskById } from '@/lib/db';
+import { priorityConfig, formatMinutes } from '@/lib/utils';
 import type { Task } from '@/types';
 
 type Quadrant = 'urgent-important' | 'not-urgent-important' | 'urgent-not-important' | 'not-urgent-not-important';
@@ -41,7 +41,7 @@ export default function EisenhowerMatrix() {
   tasks.forEach(t => grouped[classifyTask(t)].push(t));
 
   const completeTask = async (id: string) => {
-    await db.tasks.update(id, { status: 'done', completedAt: nowFn() });
+    await completeTaskById(id);
     refresh();
   };
 

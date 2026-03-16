@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useApp } from '@/lib/context';
-import { db } from '@/lib/db';
+import { db, completeTaskById, uncompleteTaskById } from '@/lib/db';
 import {
   priorityConfig, statusConfig, formatMinutes, formatDateShort,
   todayStart, todayEnd, daysFromNow, now
@@ -10,6 +10,7 @@ import {
 import type { Task, Project, Student } from '@/types';
 import Modal from '@/components/shared/Modal';
 import TaskForm from './TaskForm';
+import ProjectManager from './ProjectManager';
 import EmptyState from '@/components/shared/EmptyState';
 
 type ViewMode = 'today' | 'upcoming' | 'project' | 'student' | 'backlog' | 'all';
@@ -25,6 +26,7 @@ export default function TaskList() {
   const [filterProject, setFilterProject] = useState('');
   const [filterStudent, setFilterStudent] = useState('');
   const [showSubtaskForm, setShowSubtaskForm] = useState<string | null>(null);
+  const [showProjectManager, setShowProjectManager] = useState(false);
 
   useEffect(() => {
     db.projects.toArray().then(setProjects);
@@ -69,7 +71,7 @@ export default function TaskList() {
   }, [refreshKey, view, filterProject, filterStudent]);
 
   const complete = async (id: string) => {
-    await db.tasks.update(id, { status: 'done', completedAt: now() });
+    await completeTaskById(id);
     refresh();
   };
 
@@ -104,7 +106,10 @@ export default function TaskList() {
     <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Tasks</h1>
-        <button className="btn-primary" onClick={() => { setEditingTask(undefined); setShowForm(true); }}>+ New Task</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn-secondary" onClick={() => setShowProjectManager(true)}>Manage Projects</button>
+          <button className="btn-primary" onClick={() => { setEditingTask(undefined); setShowForm(true); }}>+ New Task</button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -175,6 +180,8 @@ export default function TaskList() {
       <Modal open={!!showSubtaskForm} onClose={() => setShowSubtaskForm(null)} title="Add Subtask">
         <TaskForm defaults={{ parentTaskId: showSubtaskForm || undefined }} onSave={() => { setShowSubtaskForm(null); refresh(); }} onCancel={() => setShowSubtaskForm(null)} />
       </Modal>
+
+      <ProjectManager open={showProjectManager} onClose={() => setShowProjectManager(false)} onRefresh={() => { db.projects.toArray().then(setProjects); refresh(); }} />
     </div>
   );
 }
@@ -279,7 +286,7 @@ function TaskRow({
               marginBottom: 2,
             }}>
               <button className="btn-icon" onClick={async () => {
-                await db.tasks.update(sub.id, { status: sub.status === 'done' ? 'todo' : 'done', completedAt: sub.status === 'done' ? undefined : now() });
+                if (sub.status === 'done') { await uncompleteTaskById(sub.id); } else { await completeTaskById(sub.id); }
                 refresh();
               }} style={{ color: sub.status === 'done' ? 'var(--color-emerald)' : 'var(--text-muted)', padding: 4 }}>
                 {sub.status === 'done' ? (
