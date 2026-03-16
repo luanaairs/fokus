@@ -15,8 +15,8 @@ export default function ParkingLot() {
   const [confirmClear, setConfirmClear] = useState(false);
 
   useEffect(() => {
-    db.parkingLot.where('processed').equals(0).toArray().then(i =>
-      setItems(i.sort((a, b) => b.createdAt - a.createdAt))
+    db.parkingLot.toArray().then(all =>
+      setItems(all.filter(i => !i.processed).sort((a, b) => b.createdAt - a.createdAt))
     );
   }, [refreshKey]);
 

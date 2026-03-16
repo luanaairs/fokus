@@ -15,8 +15,8 @@ export default function Inbox() {
   const [converting, setConverting] = useState<{ capture: Capture; type: 'task' | 'note' } | null>(null);
 
   useEffect(() => {
-    db.captures.where('processed').equals(0).toArray().then(c =>
-      setCaptures(c.sort((a, b) => b.createdAt - a.createdAt))
+    db.captures.toArray().then(all =>
+      setCaptures(all.filter(c => !c.processed).sort((a, b) => b.createdAt - a.createdAt))
     );
   }, [refreshKey]);
 
