@@ -46,14 +46,13 @@ export default function Sidebar({ currentModule, onNavigate }: SidebarProps) {
       {/* Logo */}
       <div style={{ padding: '4px 16px', marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 'var(--radius-sm)',
-            background: 'var(--color-accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'white', fontSize: 16, fontFamily: 'var(--font-display)',
-          }}>
-            f
-          </div>
+          <img
+            src="/icon.png"
+            alt="fokus"
+            width={32}
+            height={32}
+            style={{ borderRadius: 'var(--radius-sm)' }}
+          />
           <span style={{
             fontFamily: 'var(--font-display)',
             fontSize: 22,
