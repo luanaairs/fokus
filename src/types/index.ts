@@ -150,4 +150,65 @@ export interface AppSettings {
   timerRunning: boolean;
   timerTaskId?: string;
   timerEndTime?: number;
+  dailyCapacityMinutes?: number;
+  endOfDayTime?: string; // "HH:MM" format
+}
+
+// --- Routine Module ---
+
+export type RoutineType = 'fixed' | 'timed' | 'flexible' | 'weekly';
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'custom';
+export type RoutineItemType = 'step' | 'linked_task' | 'buffer' | 'divider';
+export type RoutineItemStatus = 'pending' | 'active' | 'done' | 'skipped';
+
+export interface Routine {
+  id: string;
+  name: string;
+  type: RoutineType;
+  timeOfDay: TimeOfDay;
+  customLabel?: string;
+  /** For weekly recurring: which days (0=Sun, 1=Mon, ..., 6=Sat) */
+  weekDays?: number[];
+  /** For timed routines, overall start time "HH:MM" */
+  startTime?: string;
+  isTemplate: boolean;
+  isActive: boolean; // active for today
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface RoutineItem {
+  id: string;
+  routineId: string;
+  type: RoutineItemType;
+  title: string;
+  notes?: string;
+  /** Estimated duration in minutes */
+  durationMinutes: number;
+  /** For linked_task: the task id */
+  linkedTaskId?: string;
+  /** For timed routines: start time "HH:MM" */
+  startTime?: string;
+  /** Sort order within routine */
+  sortOrder: number;
+  createdAt: number;
+}
+
+export interface RoutineRun {
+  id: string;
+  routineId: string;
+  date: string; // "YYYY-MM-DD"
+  startedAt: number;
+  completedAt?: number;
+  /** Per-item status for this run */
+  itemStates: RoutineRunItemState[];
+}
+
+export interface RoutineRunItemState {
+  itemId: string;
+  status: RoutineItemStatus;
+  startedAt?: number;
+  completedAt?: number;
+  /** Elapsed seconds (for pause/resume tracking) */
+  elapsedSeconds: number;
 }

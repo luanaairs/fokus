@@ -11,6 +11,13 @@ interface ActiveContext {
   label?: string;
 }
 
+interface ActiveRoutineInfo {
+  routineId: string;
+  routineName: string;
+  currentStep?: string;
+  remainingMinutes?: number;
+}
+
 interface AppContextType {
   settings: AppSettings | null;
   activeContext: ActiveContext;
@@ -34,6 +41,8 @@ interface AppContextType {
   switchWarning: { show: boolean; taskTitle: string; onContinue: () => void } | null;
   setSwitchWarning: (w: { show: boolean; taskTitle: string; onContinue: () => void } | null) => void;
   syncStatus: SyncStatus;
+  activeRoutine: ActiveRoutineInfo | null;
+  setActiveRoutine: (info: ActiveRoutineInfo | null) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -51,6 +60,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [switchWarning, setSwitchWarning] = useState<{ show: boolean; taskTitle: string; onContinue: () => void } | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [activeRoutine, setActiveRoutine] = useState<ActiveRoutineInfo | null>(null);
 
   useEffect(() => {
     getSettings().then(s => {
@@ -90,6 +100,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       theme, toggleTheme,
       switchWarning, setSwitchWarning,
       syncStatus,
+      activeRoutine, setActiveRoutine,
     }}>
       {children}
     </AppContext.Provider>

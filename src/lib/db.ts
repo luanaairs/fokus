@@ -2,7 +2,8 @@ import Dexie, { type EntityTable } from 'dexie';
 import type {
   Student, StudentGroup, Note, Task, Project,
   LessonPlan, WritingProject, Capture, FocusSession,
-  ParkingLotItem, DailyStreak, AppSettings
+  ParkingLotItem, DailyStreak, AppSettings,
+  Routine, RoutineItem, RoutineRun
 } from '@/types';
 
 class FokusDB extends Dexie {
@@ -18,6 +19,9 @@ class FokusDB extends Dexie {
   parkingLot!: EntityTable<ParkingLotItem, 'id'>;
   dailyStreaks!: EntityTable<DailyStreak, 'id'>;
   settings!: EntityTable<AppSettings, 'id'>;
+  routines!: EntityTable<Routine, 'id'>;
+  routineItems!: EntityTable<RoutineItem, 'id'>;
+  routineRuns!: EntityTable<RoutineRun, 'id'>;
 
   constructor() {
     super('fokus');
@@ -34,6 +38,23 @@ class FokusDB extends Dexie {
       parkingLot: 'id, processed, createdAt',
       dailyStreaks: 'id, date',
       settings: 'id',
+    });
+    this.version(2).stores({
+      students: 'id, name, grade, subject, *tags, groupId, createdAt',
+      studentGroups: 'id, name',
+      notes: 'id, studentId, projectId, writingProjectId, isProgressNote, createdAt, *tags',
+      tasks: 'id, status, priority, dueDate, projectId, studentId, writingProjectId, parentTaskId, createdAt',
+      projects: 'id, name, isTeaching, createdAt',
+      lessonPlans: 'id, studentId, groupId, status, date, createdAt',
+      writingProjects: 'id, title, status, createdAt',
+      captures: 'id, processed, createdAt',
+      focusSessions: 'id, taskId, startedAt',
+      parkingLot: 'id, processed, createdAt',
+      dailyStreaks: 'id, date',
+      settings: 'id',
+      routines: 'id, type, timeOfDay, isActive, isTemplate, createdAt',
+      routineItems: 'id, routineId, type, linkedTaskId, sortOrder, createdAt',
+      routineRuns: 'id, routineId, date, startedAt',
     });
   }
 }
@@ -159,6 +180,9 @@ export async function exportAllData(): Promise<string> {
     focusSessions: await db.focusSessions.toArray(),
     parkingLot: await db.parkingLot.toArray(),
     dailyStreaks: await db.dailyStreaks.toArray(),
+    routines: await db.routines.toArray(),
+    routineItems: await db.routineItems.toArray(),
+    routineRuns: await db.routineRuns.toArray(),
     exportedAt: new Date().toISOString(),
   };
   return JSON.stringify(data, null, 2);
@@ -170,6 +194,7 @@ export async function importAllData(json: string, mode: 'merge' | 'replace'): Pr
     'students', 'studentGroups', 'notes', 'tasks', 'projects',
     'lessonPlans', 'writingProjects', 'captures', 'focusSessions',
     'parkingLot', 'dailyStreaks',
+    'routines', 'routineItems', 'routineRuns',
   ] as const;
 
   if (mode === 'replace') {

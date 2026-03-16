@@ -6,6 +6,7 @@ const TABLES = [
   'students', 'studentGroups', 'notes', 'tasks', 'projects',
   'lessonPlans', 'writingProjects', 'captures', 'focusSessions',
   'parkingLot', 'dailyStreaks',
+  'routines', 'routineItems', 'routineRuns',
 ] as const;
 
 // Auto-create table if it doesn't exist

@@ -435,6 +435,16 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ─── Routine Runner responsive ─── */
+.routine-runner-body {
+  display: flex;
+}
+
 /* ─── Mobile responsive ─── */
 @media (max-width: 768px) {
   /* Sidebar: hidden by default on mobile, shown via .sidebar-open */
@@ -539,6 +549,24 @@
   /* Flex wrap for filter bars */
   .filter-bar {
     flex-wrap: wrap;
+  }
+
+  /* Routine runner: stack sidebar below on mobile */
+  .routine-runner-body {
+    flex-direction: column-reverse !important;
+  }
+  .routine-runner-body > div:first-child {
+    width: 100% !important;
+    max-height: 200px;
+    border-right: none !important;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* Routine nudge: bottom center on mobile */
+  .routine-nudge-toast {
+    left: 12px !important;
+    right: 12px !important;
+    max-width: none !important;
   }
 }
 

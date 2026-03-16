@@ -10,6 +10,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "fokus - Teacher Productivity OS",
   description: "A personal productivity and teaching command center, designed for ADHD minds.",
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
