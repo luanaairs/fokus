@@ -429,3 +429,123 @@
 .animate-pulse-slow {
   animation: pulse 2s ease-in-out infinite;
 }
+
+/* ─── Mobile responsive ─── */
+@media (max-width: 768px) {
+  /* Sidebar: hidden by default on mobile, shown via .sidebar-open */
+  .app-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 240px;
+    z-index: 90;
+    transition: left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .app-sidebar.sidebar-open {
+    left: 0;
+  }
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 89;
+  }
+
+  /* Hamburger button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Page content padding */
+  .page-content {
+    padding: 16px !important;
+  }
+
+  /* Stat cards: 2 columns */
+  .stat-grid-4 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Dashboard grids: stack vertically */
+  .grid-2col, .grid-main-side {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Eisenhower: single column */
+  .grid-eisenhower {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Task row actions: always visible on mobile */
+  .task-actions-mobile {
+    display: flex !important;
+  }
+
+  /* Modal: full width on mobile */
+  .modal-content {
+    max-width: 100% !important;
+    width: 96% !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 20px !important;
+    max-height: 90vh !important;
+  }
+
+  /* TopBar: compact */
+  .topbar-left .topbar-stats {
+    display: none;
+  }
+
+  /* Hide keyboard shortcut hints on mobile */
+  .kbd-hint {
+    display: none;
+  }
+
+  /* Dashboard header: stack */
+  .dash-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start !important;
+  }
+
+  /* Student/writing grid: single column */
+  .grid-cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form 2-col grids: stack */
+  .form-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Writing detail 2-col: stack */
+  .grid-detail-2col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Compact header with buttons */
+  .header-with-actions {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start !important;
+  }
+
+  /* Flex wrap for filter bars */
+  .filter-bar {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 769px) {
+  .app-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+  }
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  .sidebar-backdrop {
+    display: none !important;
+  }
+}

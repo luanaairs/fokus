@@ -79,7 +79,7 @@ export default function StudentDetail({ student, onBack, onDelete }: { student: 
   ];
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
+    <div className="page-content" style={{ padding: '32px 36px', maxWidth: 1000 }}>
       <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 20, fontSize: 13 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
         Back to Students

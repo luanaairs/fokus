@@ -35,7 +35,7 @@ export default function Sidebar({ currentModule, onNavigate, onBackup }: Sidebar
 
   return (
     <aside style={{
-      width: 240,
+      width: '100%',
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -103,7 +103,7 @@ export default function Sidebar({ currentModule, onNavigate, onBackup }: Sidebar
         }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           Quick Capture
-          <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 4, fontWeight: 400 }}>⌘K</span>
+          <span className="kbd-hint" style={{ fontSize: 10, opacity: 0.7, marginLeft: 4, fontWeight: 400 }}>⌘K</span>
         </button>
         <button className="btn-ghost" onClick={() => setSessionPlannerOpen(true)} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13,

@@ -103,8 +103,8 @@ export default function TaskList() {
   ];
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1000 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+    <div className="page-content" style={{ padding: '32px 36px', maxWidth: 1000 }}>
+      <div className="header-with-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32 }}>Tasks</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn-secondary" onClick={() => setShowProjectManager(true)}>Manage Projects</button>
@@ -213,6 +213,11 @@ function TaskRow({
         style={{ opacity: isDone ? 0.5 : 1 }}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
+        onClick={(e) => {
+          // On touch devices, toggle actions on tap (if not clicking a button)
+          if ((e.target as HTMLElement).closest('button')) return;
+          if ('ontouchstart' in window) setShowActions(a => !a);
+        }}
       >
         <button className="btn-icon" onClick={onComplete} style={{ color: isDone ? 'var(--color-emerald)' : 'var(--text-muted)' }}>
           {isDone ? (

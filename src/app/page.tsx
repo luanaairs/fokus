@@ -23,12 +23,14 @@ import { exportAllData } from '@/lib/db';
 function AppShell() {
   const [currentModule, setCurrentModule] = useState('dashboard');
   const [showBackup, setShowBackup] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { setCaptureOpen, timerTaskId, setSwitchWarning } = useApp();
 
   const handleCapture = useCallback(() => setCaptureOpen(true), [setCaptureOpen]);
   useKeyboard('k', handleCapture);
 
   const navigate = useCallback((module: string) => {
+    setSidebarOpen(false);
     if (timerTaskId && module !== currentModule) {
       setSwitchWarning({
         show: true,
@@ -68,9 +70,12 @@ function AppShell() {
 
   return (
     <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
-      <Sidebar currentModule={currentModule} onNavigate={navigate} onBackup={() => setShowBackup(true)} />
+      {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+      <div className={`app-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+        <Sidebar currentModule={currentModule} onNavigate={navigate} onBackup={() => { setShowBackup(true); setSidebarOpen(false); }} />
+      </div>
       <div className="flex flex-col" style={{ flex: 1, overflow: 'hidden' }}>
-        <TopBar />
+        <TopBar onMenuToggle={() => setSidebarOpen(o => !o)} />
         <main style={{ flex: 1, overflowY: 'auto' }}>
           {renderModule()}
         </main>

@@ -25,8 +25,8 @@ export default function WritingProjects() {
   }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1000 }}>
-      <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
+    <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1000 }}>
+      <div className="header-with-actions flex items-center justify-between" style={{ marginBottom: 20 }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700 }}>Writing Projects</h1>
         <button className="btn-primary" onClick={() => { setEditing(undefined); setShowForm(true); }}>+ New Project</button>
       </div>
@@ -34,7 +34,7 @@ export default function WritingProjects() {
       {projects.length === 0 ? (
         <EmptyState icon="✎" title="No writing projects" description="Track your fiction, essays, articles, and more" action={{ label: '+ Create Project', onClick: () => setShowForm(true) }} />
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        <div className="grid-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
           {projects.map(wp => {
             const pct = wp.wordCountGoal > 0 ? (wp.currentWordCount / wp.wordCountGoal) * 100 : 0;
             return (
@@ -103,14 +103,14 @@ function WritingForm({ project, onSave, onCancel }: { project?: WritingProject; 
   return (
     <div className="flex flex-col gap-3">
       <input className="input" placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} autoFocus />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <input className="input" placeholder="Genre / Type" value={genre} onChange={e => setGenre(e.target.value)} />
         <select className="select" value={status} onChange={e => setStatus(e.target.value as WritingStatus)}>
           {Object.entries(writingStatusConfig).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
       </div>
       <input className="input" placeholder="Editor URL (Google Docs, Scrivener, etc.)" value={editorUrl} onChange={e => setEditorUrl(e.target.value)} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <div>
           <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 4 }}>Deadline</label>
           <input type="date" className="input" value={deadline} onChange={e => setDeadline(e.target.value)} />
@@ -174,7 +174,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
   }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1000 }}>
+    <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1000 }}>
       <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 16, fontSize: 13 }}>← Back to Writing</button>
 
       <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
@@ -217,7 +217,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div className="grid-detail-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Notes & Research */}
         <div>
           <div className="flex items-center justify-between" style={{ marginBottom: 8 }}>

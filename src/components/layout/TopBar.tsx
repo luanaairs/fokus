@@ -7,7 +7,7 @@ import { formatMinutes, formatTimer, todayStart, todayEnd } from '@/lib/utils';
 import { useTimer } from '@/hooks/useTimer';
 import type { Task } from '@/types';
 
-export default function TopBar() {
+export default function TopBar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const {
     activeContext, timerTaskId, timerDuration,
     setTimerTaskId, setTimerDuration, setFocusMode, setFocusTaskId,
@@ -55,7 +55,12 @@ export default function TopBar() {
       justifyContent: 'space-between',
       fontSize: 13,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {onMenuToggle && (
+          <button className="btn-icon mobile-menu-btn" onClick={onMenuToggle} style={{ display: 'none' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 12h18M3 6h18M3 18h18" /></svg>
+          </button>
+        )}
         {activeContext.label && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
@@ -67,7 +72,7 @@ export default function TopBar() {
             {activeContext.label}
           </div>
         )}
-        <span style={{ color: 'var(--text-muted)' }}>
+        <span className="topbar-stats" style={{ color: 'var(--text-muted)' }}>
           {todayTasks.length} remaining · {formatMinutes(totalMinutes)}
         </span>
       </div>
