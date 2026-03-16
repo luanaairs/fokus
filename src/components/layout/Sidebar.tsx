@@ -28,9 +28,11 @@ function NavIcon({ path }: { path: string }) {
 interface SidebarProps {
   currentModule: string;
   onNavigate: (module: string) => void;
+  onOpenPomodoro?: () => void;
+  onOpenRoulette?: () => void;
 }
 
-export default function Sidebar({ currentModule, onNavigate }: SidebarProps) {
+export default function Sidebar({ currentModule, onNavigate, onOpenPomodoro, onOpenRoulette }: SidebarProps) {
   const { setCaptureOpen, setSessionPlannerOpen } = useApp();
 
   return (
@@ -104,11 +106,23 @@ export default function Sidebar({ currentModule, onNavigate }: SidebarProps) {
           Quick Capture
           <span className="kbd-hint" style={{ fontSize: 10, opacity: 0.7, marginLeft: 4, fontWeight: 400 }}>⌘K</span>
         </button>
-        <button className="btn-ghost" onClick={() => setSessionPlannerOpen(true)} style={{
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn-ghost" onClick={() => setSessionPlannerOpen(true)} style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, padding: '8px 10px',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+            Planner
+          </button>
+          <button className="btn-ghost" onClick={onOpenPomodoro} style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12, padding: '8px 10px',
+          }}>
+            🍅 Pomo
+          </button>
+        </div>
+        <button className="btn-ghost" onClick={onOpenRoulette} style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 13,
         }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-          Session Planner
+          🎰 Task Roulette
         </button>
         <button
           className={`sidebar-link ${currentModule === 'settings' ? 'active' : ''}`}

@@ -212,3 +212,26 @@ export interface RoutineRunItemState {
   /** Elapsed seconds (for pause/resume tracking) */
   elapsedSeconds: number;
 }
+
+// --- Gamification ---
+
+export interface UserXP {
+  id: string; // always 'default'
+  totalXP: number;
+  level: number;
+  tasksCompleted: number;
+  routinesCompleted: number;
+  focusMinutes: number;
+  currentStreak: number;
+  longestStreak: number;
+  achievements: string[]; // achievement IDs
+  updatedAt: number;
+}
+
+export interface PomodoroSession {
+  id: string;
+  taskId?: string;
+  type: 'work' | 'short_break' | 'long_break';
+  duration: number; // seconds
+  completedAt: number;
+}
