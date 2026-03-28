@@ -99,6 +99,10 @@ export interface WritingProject {
   wordCountGoal: number;
   currentWordCount: number;
   wordCountHistory: WordCountEntry[];
+  outline?: OutlineSection[];
+  revisionChecklist?: RevisionItem[];
+  scratchpad?: string;
+  dailyWordGoal?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -106,6 +110,25 @@ export interface WritingProject {
 export interface WordCountEntry {
   date: number;
   count: number;
+  sessionMinutes?: number; // for sprint tracking
+  note?: string;
+}
+
+export interface OutlineSection {
+  id: string;
+  title: string;
+  notes?: string;
+  targetWords?: number;
+  currentWords?: number;
+  status: 'todo' | 'drafting' | 'done';
+  sortOrder: number;
+}
+
+export interface RevisionItem {
+  id: string;
+  label: string;
+  checked: boolean;
+  notes?: string;
 }
 
 export interface Capture {
