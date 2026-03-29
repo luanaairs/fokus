@@ -229,7 +229,7 @@ function WritingDetail({ project, onBack }: { project: WritingProject; onBack: (
     velocity = Math.round(diff / days);
   }
 
-  const outlineSections = (wp.outline || []).filter(s => s.status !== 'done').map(s => s.title);
+  const outlineSections = (wp.outline || []).filter(s => s.status !== 'done' && s.type !== 'chapter').map(s => s.title);
 
   return (
     <div className="page-content" style={{ padding: '24px 28px', maxWidth: 1000 }}>

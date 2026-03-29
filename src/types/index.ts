@@ -116,12 +116,23 @@ export interface WordCountEntry {
 
 export interface OutlineSection {
   id: string;
+  /** 'chapter' = top-level grouping; 'scene' / 'plot_point' = child items; absent = legacy flat section */
+  type?: 'chapter' | 'scene' | 'plot_point';
+  /** For scenes/plot_points: id of the parent chapter */
+  parentId?: string;
   title: string;
   notes?: string;
   targetWords?: number;
   currentWords?: number;
   status: 'todo' | 'drafting' | 'done';
   sortOrder: number;
+  /** Chapter-specific */
+  chapterNumber?: number;
+  color?: string;
+  /** Scene / plot-point specific */
+  storyDate?: string;  // free-text in-story date/time for chronological sorting
+  pov?: string;        // point-of-view character
+  location?: string;
 }
 
 export interface RevisionItem {
