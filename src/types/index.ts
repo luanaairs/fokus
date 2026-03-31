@@ -186,6 +186,7 @@ export interface AppSettings {
   timerEndTime?: number;
   dailyCapacityMinutes?: number;
   endOfDayTime?: string; // "HH:MM" format
+  transitionPrompts?: boolean; // show transition prompts when navigating modules
 }
 
 // --- Routine Module ---

@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [dailyCapacity, setDailyCapacity] = useState(420);
   const [endOfDayTime, setEndOfDayTime] = useState('17:00');
   const [weeklyReviewDay, setWeeklyReviewDay] = useState(5);
+  const [transitionPrompts, setTransitionPrompts] = useState(true);
   const [saved, setSaved] = useState(false);
 
   // Backup state
@@ -28,6 +29,7 @@ export default function SettingsPage() {
       setDailyCapacity(s.dailyCapacityMinutes || 420);
       setEndOfDayTime(s.endOfDayTime || '17:00');
       setWeeklyReviewDay(s.weeklyReviewDay);
+      setTransitionPrompts(s.transitionPrompts !== false);
     });
   }, []);
 
@@ -36,6 +38,7 @@ export default function SettingsPage() {
       dailyCapacityMinutes: dailyCapacity,
       endOfDayTime,
       weeklyReviewDay,
+      transitionPrompts,
     });
     setSaved(true);
     refresh();
@@ -109,6 +112,27 @@ export default function SettingsPage() {
           </div>
           <button className="btn-secondary" onClick={toggleTheme} style={{ fontSize: 13, minWidth: 100 }}>
             {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 500 }}>Transition prompts</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Show a brief tip when switching between modules</div>
+          </div>
+          <button
+            onClick={() => setTransitionPrompts(!transitionPrompts)}
+            style={{
+              width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+              background: transitionPrompts ? 'var(--color-accent)' : 'var(--border-color)',
+              position: 'relative', transition: 'background 0.2s',
+            }}
+          >
+            <span style={{
+              position: 'absolute', top: 2, left: transitionPrompts ? 22 : 2,
+              width: 20, height: 20, borderRadius: '50%', background: '#fff',
+              transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
           </button>
         </div>
       </section>

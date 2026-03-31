@@ -8,6 +8,7 @@ import {
   todayStart, todayEnd, daysFromNow, priorityConfig, now
 } from '@/lib/utils';
 import type { Task, Project, WritingProject, Routine, RoutineItem } from '@/types';
+import DailyTodoList from '@/components/dashboard/DailyTodoList';
 
 interface QuoteSlide {
   lines: string[];
@@ -337,6 +338,14 @@ export default function Dashboard({ onNavigate, onOpenPomodoro, onOpenRoulette, 
             {inboxCount > 0 ? 'items to triage' : 'all clear'}
           </div>
         </div>
+      </div>
+
+      {/* Daily Plan */}
+      <div style={{ marginBottom: 24 }}>
+        <DailyTodoList onFocusTask={(taskId) => {
+          setFocusTaskId(taskId);
+          setFocusMode(true);
+        }} />
       </div>
 
       {/* Main Content Grid */}

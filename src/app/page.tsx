@@ -30,7 +30,7 @@ import { exportAllData } from '@/lib/db';
 function AppShell() {
   const [currentModule, setCurrentModule] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { setCaptureOpen, timerTaskId, setSwitchWarning, setFocusMode, setFocusTaskId } = useApp();
+  const { settings, setCaptureOpen, timerTaskId, setSwitchWarning, setFocusMode, setFocusTaskId } = useApp();
 
   // New feature state
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
@@ -47,22 +47,23 @@ function AppShell() {
 
   const navigate = useCallback((module: string) => {
     setSidebarOpen(false);
+    const showTransition = settings?.transitionPrompts !== false;
     if (timerTaskId && module !== currentModule) {
       setSwitchWarning({
         show: true,
         taskTitle: 'current task',
         onContinue: () => {
           previousModule.current = currentModule;
-          setTransition({ from: currentModule, to: module });
+          if (showTransition) setTransition({ from: currentModule, to: module });
           setCurrentModule(module);
         },
       });
     } else if (module !== currentModule) {
       previousModule.current = currentModule;
-      setTransition({ from: currentModule, to: module });
+      if (showTransition) setTransition({ from: currentModule, to: module });
       setCurrentModule(module);
     }
-  }, [timerTaskId, currentModule, setSwitchWarning]);
+  }, [timerTaskId, currentModule, setSwitchWarning, settings]);
 
   const handleExport = async () => {
     const data = await exportAllData();
