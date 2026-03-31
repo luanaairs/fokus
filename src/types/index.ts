@@ -175,6 +175,17 @@ export interface DailyStreak {
   tasksCompleted: number;
 }
 
+export interface DailyReflection {
+  id: string;
+  date: string;      // YYYY-MM-DD
+  mood: 1 | 2 | 3 | 4 | 5;
+  energy: 1 | 2 | 3 | 4 | 5;
+  wins: string;
+  struggles: string;
+  tomorrowFocus: string;
+  createdAt: number;
+}
+
 export interface AppSettings {
   id: string;
   theme: 'dark' | 'light';

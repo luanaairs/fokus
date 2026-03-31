@@ -1,26 +1,25 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp } from '@/lib/context';
 import { db, completeTaskById, uncompleteTaskById } from '@/lib/db';
-import { newId, now, todayEnd, priorityConfig } from '@/lib/utils';
+import { newId, now, todayStart, todayEnd, priorityConfig } from '@/lib/utils';
 import type { Task, Priority } from '@/types';
 
 /**
  * DailyTodoList — a lightweight "today" checklist on the dashboard.
  *
- * Quick-add syntax:  type a task title, then optionally:
- *   /high /critical /low   → set priority
- *   /30m /1h /15m           → estimated time
- *   /tag Some Tag           → context tag
- *   /tomorrow               → due tomorrow instead of today
- *
- * Also supports picking from existing undone tasks via a search dropdown.
+ * Features:
+ *   - Quick-add with slash syntax (/high /30m /tag Name /tomorrow)
+ *   - "+search" to add existing tasks
+ *   - Drag-and-drop reordering
+ *   - Carry-forward prompt for yesterday's unfinished items
+ *   - Auto-suggestions for overdue / due-today / high-priority tasks
  */
 
 interface DailyItem {
   id: string;
-  taskId?: string;   // links to a real Task
+  taskId?: string;
   label: string;
   done: boolean;
   priority?: Priority;
@@ -28,29 +27,32 @@ interface DailyItem {
   sortOrder: number;
 }
 
-const STORAGE_KEY = 'fokus-daily-todo';
-
-function loadDailyItems(): DailyItem[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    // clear stale list (saved on a different day)
-    if (parsed.date !== new Date().toISOString().split('T')[0]) {
-      localStorage.removeItem(STORAGE_KEY);
-      return [];
-    }
-    return parsed.items || [];
-  } catch {
-    return [];
-  }
+interface CarryForwardItem {
+  id: string;
+  taskId?: string;
+  label: string;
+  priority?: Priority;
+  selected: boolean;
 }
 
-function saveDailyItems(items: DailyItem[]) {
+const STORAGE_KEY = 'fokus-daily-todo';
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function loadStorage(): { date: string; items: DailyItem[]; reflectionDone?: boolean } | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+
+function saveStorage(items: DailyItem[], reflectionDone?: boolean) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    date: new Date().toISOString().split('T')[0],
+    date: todayStr(),
     items,
+    reflectionDone: reflectionDone || false,
   }));
 }
 
@@ -60,26 +62,74 @@ interface Props {
 
 export default function DailyTodoList({ onFocusTask }: Props) {
   const { refreshKey, refresh } = useApp();
-  const [items, setItems] = useState<DailyItem[]>(() => loadDailyItems());
+  const [items, setItems] = useState<DailyItem[]>([]);
   const [input, setInput] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [carryForward, setCarryForward] = useState<CarryForwardItem[] | null>(null);
+  const [suggestions, setSuggestions] = useState<Task[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const initialized = useRef(false);
 
-  // Persist whenever items change
-  useEffect(() => { saveDailyItems(items); }, [items]);
-
-  // Search existing tasks when input starts with "+"
+  // Initialize: check for carry-forward or load today's list
   useEffect(() => {
-    if (!input.startsWith('+') || input.length < 2) {
-      setShowSearch(false);
-      return;
+    if (initialized.current) return;
+    initialized.current = true;
+    const stored = loadStorage();
+    if (stored && stored.date === todayStr()) {
+      setItems(stored.items);
+    } else if (stored && stored.date !== todayStr() && stored.items.length > 0) {
+      // Yesterday's (or older) list — show carry-forward for undone items
+      const undone = stored.items.filter(i => !i.done);
+      if (undone.length > 0) {
+        setCarryForward(undone.map(i => ({
+          id: i.id, taskId: i.taskId, label: i.label,
+          priority: i.priority, selected: true,
+        })));
+      }
     }
+  }, []);
+
+  // Persist items
+  useEffect(() => {
+    if (!initialized.current) return;
+    saveStorage(items);
+  }, [items]);
+
+  // Load suggestions when list is empty or small
+  useEffect(() => {
+    const start = todayStart();
+    const end = todayEnd();
+    db.tasks.toArray().then(all => {
+      const active = all.filter(t => t.status !== 'done' && t.status !== 'deferred');
+      const linkedIds = new Set(items.filter(i => i.taskId).map(i => i.taskId));
+
+      const overdue = active.filter(t => t.dueDate && t.dueDate < start && !linkedIds.has(t.id));
+      const dueToday = active.filter(t => t.dueDate && t.dueDate >= start && t.dueDate <= end && !linkedIds.has(t.id));
+      const highPriority = active.filter(t =>
+        (t.priority === 'critical' || t.priority === 'high') && !linkedIds.has(t.id)
+        && !overdue.some(o => o.id === t.id) && !dueToday.some(d => d.id === t.id)
+      );
+
+      const combined = [
+        ...overdue.sort((a, b) => (a.dueDate || 0) - (b.dueDate || 0)),
+        ...dueToday.sort((a, b) => priorityConfig[a.priority].sortOrder - priorityConfig[b.priority].sortOrder),
+        ...highPriority.sort((a, b) => priorityConfig[a.priority].sortOrder - priorityConfig[b.priority].sortOrder),
+      ].slice(0, 5);
+
+      setSuggestions(combined);
+    });
+  }, [refreshKey, items]);
+
+  // Search existing tasks
+  useEffect(() => {
+    if (!input.startsWith('+') || input.length < 2) { setShowSearch(false); return; }
     const query = input.slice(1).trim().toLowerCase();
     if (!query) { setShowSearch(false); return; }
-
     db.tasks.toArray().then(all => {
       const results = all
         .filter(t => t.status !== 'done' && t.status !== 'deferred')
@@ -92,17 +142,36 @@ export default function DailyTodoList({ onFocusTask }: Props) {
     });
   }, [input, items]);
 
+  /* ─── Carry-forward ─── */
+  const acceptCarryForward = () => {
+    if (!carryForward) return;
+    const selected = carryForward.filter(c => c.selected);
+    const newItems: DailyItem[] = selected.map((c, i) => ({
+      id: newId(), taskId: c.taskId, label: c.label,
+      done: false, priority: c.priority, sortOrder: i,
+    }));
+    setItems(newItems);
+    setCarryForward(null);
+  };
+
+  const dismissCarryForward = () => { setCarryForward(null); };
+
+  /* ─── Add items ─── */
+  const addExistingTask = useCallback((task: Task) => {
+    setItems(prev => [...prev, {
+      id: newId(), taskId: task.id, label: task.title, done: task.status === 'done',
+      priority: task.priority, estimatedMinutes: task.estimatedMinutes || undefined,
+      sortOrder: prev.length,
+    }]);
+    setInput('');
+    setShowSearch(false);
+  }, []);
+
   const parseAndAdd = async () => {
     const raw = input.trim();
     if (!raw) return;
+    if (showSearch && searchResults.length > 0) { addExistingTask(searchResults[selectedIdx]); return; }
 
-    // If a search result is selected
-    if (showSearch && searchResults.length > 0) {
-      addExistingTask(searchResults[selectedIdx]);
-      return;
-    }
-
-    // Parse slash commands
     let title = raw;
     let priority: Priority = 'medium';
     let estimatedMinutes = 0;
@@ -124,79 +193,71 @@ export default function DailyTodoList({ onFocusTask }: Props) {
       } else if (/^\/(\d+)(h|hr)$/i.test(p)) {
         estimatedMinutes = parseInt(p.match(/\d+/)![0]) * 60;
       } else if (p === '/tag' && i + 1 < parts.length) {
-        // collect everything until next / or end
         i++;
         const tagParts: string[] = [];
-        while (i < parts.length && !parts[i].startsWith('/')) {
-          tagParts.push(parts[i]);
-          i++;
-        }
+        while (i < parts.length && !parts[i].startsWith('/')) { tagParts.push(parts[i]); i++; }
         contextTag = tagParts.join(' ');
         continue;
-      } else {
-        titleParts.push(p);
-      }
+      } else { titleParts.push(p); }
       i++;
     }
 
     title = titleParts.join(' ');
     if (!title) return;
 
-    // Create a real task in DB
     const dueDate = dueTomorrow
       ? (() => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 59, 999); return d.getTime(); })()
       : todayEnd();
 
     const taskId = newId();
-    const task: Task = {
-      id: taskId,
-      title,
-      description: '',
-      dueDate,
-      priority,
-      contextTag,
-      estimatedMinutes,
-      status: 'todo',
-      isRecurring: false,
-      createdAt: now(),
-      updatedAt: now(),
-    };
-    await db.tasks.add(task);
+    await db.tasks.add({
+      id: taskId, title, description: '', dueDate, priority, contextTag,
+      estimatedMinutes, status: 'todo', isRecurring: false, createdAt: now(), updatedAt: now(),
+    });
 
     setItems(prev => [...prev, {
       id: newId(), taskId, label: title, done: false,
-      priority, estimatedMinutes: estimatedMinutes || undefined,
-      sortOrder: prev.length,
+      priority, estimatedMinutes: estimatedMinutes || undefined, sortOrder: prev.length,
     }]);
     setInput('');
     setShowSearch(false);
     refresh();
   };
 
-  const addExistingTask = (task: Task) => {
-    setItems(prev => [...prev, {
-      id: newId(), taskId: task.id, label: task.title, done: task.status === 'done',
-      priority: task.priority, estimatedMinutes: task.estimatedMinutes || undefined,
-      sortOrder: prev.length,
-    }]);
-    setInput('');
-    setShowSearch(false);
+  const addSuggestion = (task: Task) => {
+    addExistingTask(task);
+    setSuggestions(prev => prev.filter(t => t.id !== task.id));
   };
 
+  /* ─── Toggle / Remove ─── */
   const toggleDone = async (item: DailyItem) => {
     const newDone = !item.done;
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, done: newDone } : i));
     if (item.taskId) {
-      if (newDone) await completeTaskById(item.taskId);
-      else await uncompleteTaskById(item.taskId);
+      if (newDone) await completeTaskById(item.taskId); else await uncompleteTaskById(item.taskId);
       refresh();
     }
   };
 
-  const removeItem = (id: string) => {
-    setItems(prev => prev.filter(i => i.id !== id));
+  const removeItem = (id: string) => { setItems(prev => prev.filter(i => i.id !== id)); };
+
+  /* ─── Drag-and-drop ─── */
+  const handleDragStart = (idx: number) => { setDragIdx(idx); };
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOverIdx(idx); };
+  const handleDragEnd = () => {
+    if (dragIdx !== null && dragOverIdx !== null && dragIdx !== dragOverIdx) {
+      setItems(prev => {
+        const arr = [...prev];
+        const [moved] = arr.splice(dragIdx, 1);
+        arr.splice(dragOverIdx, 0, moved);
+        return arr.map((item, i) => ({ ...item, sortOrder: i }));
+      });
+    }
+    setDragIdx(null);
+    setDragOverIdx(null);
   };
 
+  /* ─── Keyboard ─── */
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (showSearch) {
       if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIdx(i => Math.min(i + 1, searchResults.length - 1)); }
@@ -210,6 +271,48 @@ export default function DailyTodoList({ onFocusTask }: Props) {
 
   const doneCount = items.filter(i => i.done).length;
   const pct = items.length > 0 ? Math.round((doneCount / items.length) * 100) : 0;
+  const formatTime = (m: number) => m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? m % 60 + 'm' : ''}` : `${m}m`;
+
+  /* ─── Carry-forward overlay ─── */
+  if (carryForward) {
+    return (
+      <div className="card" style={{ padding: 24, borderLeft: '4px solid var(--color-amber)' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 4 }}>
+          Carry forward?
+        </h2>
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+          You had {carryForward.length} unfinished {carryForward.length === 1 ? 'item' : 'items'} from your last plan. Want to bring them into today?
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+          {carryForward.map(cf => (
+            <label key={cf.id} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+              borderRadius: 'var(--radius-sm)', background: 'var(--bg-input)', cursor: 'pointer',
+              opacity: cf.selected ? 1 : 0.5,
+            }}>
+              <input type="checkbox" checked={cf.selected}
+                onChange={() => setCarryForward(prev => prev!.map(i => i.id === cf.id ? { ...i, selected: !i.selected } : i))}
+                style={{ accentColor: 'var(--color-accent)' }} />
+              {cf.priority && cf.priority !== 'medium' && (
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: priorityConfig[cf.priority].color, flexShrink: 0 }} />
+              )}
+              <span style={{ fontSize: 13 }}>{cf.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button className="btn-ghost" onClick={dismissCarryForward} style={{ fontSize: 13 }}>
+            Start fresh
+          </button>
+          <button className="btn-primary" onClick={acceptCarryForward} style={{ fontSize: 13 }}>
+            Carry forward ({carryForward.filter(c => c.selected).length})
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card" style={{ padding: 20 }}>
@@ -236,12 +339,29 @@ export default function DailyTodoList({ onFocusTask }: Props) {
       {/* Items list */}
       {items.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
-          {items.map(item => (
-            <div key={item.id} style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
-              borderRadius: 'var(--radius-sm)', background: item.done ? 'var(--color-emerald-light)' : 'var(--bg-input)',
-              transition: 'background 0.15s',
-            }}>
+          {items.map((item, idx) => (
+            <div
+              key={item.id}
+              draggable
+              onDragStart={() => handleDragStart(idx)}
+              onDragOver={e => handleDragOver(e, idx)}
+              onDragEnd={handleDragEnd}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                borderRadius: 'var(--radius-sm)',
+                background: dragOverIdx === idx && dragIdx !== null
+                  ? 'var(--color-accent-light)'
+                  : item.done ? 'var(--color-emerald-light)' : 'var(--bg-input)',
+                transition: 'background 0.15s',
+                opacity: dragIdx === idx ? 0.4 : 1,
+                cursor: 'grab',
+              }}
+            >
+              {/* Drag handle */}
+              <span style={{ color: 'var(--text-muted)', opacity: 0.35, fontSize: 10, cursor: 'grab', flexShrink: 0, userSelect: 'none' }}>
+                ⠿
+              </span>
+
               <button className="btn-icon" onClick={() => toggleDone(item)}
                 style={{ padding: 2, color: item.done ? 'var(--color-emerald)' : 'var(--text-muted)', flexShrink: 0 }}>
                 {item.done ? (
@@ -252,10 +372,7 @@ export default function DailyTodoList({ onFocusTask }: Props) {
               </button>
 
               {item.priority && item.priority !== 'medium' && (
-                <div style={{
-                  width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                  background: priorityConfig[item.priority].color,
-                }} />
+                <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: priorityConfig[item.priority].color }} />
               )}
 
               <span style={{
@@ -268,7 +385,7 @@ export default function DailyTodoList({ onFocusTask }: Props) {
 
               {item.estimatedMinutes && item.estimatedMinutes > 0 && (
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>
-                  {item.estimatedMinutes >= 60 ? `${Math.floor(item.estimatedMinutes / 60)}h${item.estimatedMinutes % 60 ? item.estimatedMinutes % 60 + 'm' : ''}` : `${item.estimatedMinutes}m`}
+                  {formatTime(item.estimatedMinutes)}
                 </span>
               )}
 
@@ -285,6 +402,55 @@ export default function DailyTodoList({ onFocusTask }: Props) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Auto-suggestions */}
+      {suggestions.length > 0 && items.length < 5 && !showSuggestions && (
+        <button className="btn-ghost" onClick={() => setShowSuggestions(true)}
+          style={{ fontSize: 12, marginBottom: 10, color: 'var(--color-sky)' }}>
+          {suggestions.length} suggested {suggestions.length === 1 ? 'task' : 'tasks'} — click to view
+        </button>
+      )}
+
+      {showSuggestions && suggestions.length > 0 && (
+        <div style={{
+          marginBottom: 12, padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+          background: 'var(--color-sky-light, rgba(97,151,232,0.08))',
+          border: '1px solid rgba(97,151,232,0.2)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-sky)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Suggested
+            </span>
+            <button className="btn-icon" onClick={() => setShowSuggestions(false)} style={{ padding: 2, color: 'var(--text-muted)', fontSize: 10 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {suggestions.map(t => {
+              const isOverdue = t.dueDate && t.dueDate < todayStart();
+              return (
+                <div key={t.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px',
+                  borderRadius: 'var(--radius-sm)', background: 'var(--bg-card)', fontSize: 13,
+                }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: priorityConfig[t.priority].color, flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>{t.title}</span>
+                  {isOverdue && (
+                    <span style={{ fontSize: 10, color: 'var(--color-rose)', fontWeight: 600 }}>overdue</span>
+                  )}
+                  {t.contextTag && (
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{t.contextTag}</span>
+                  )}
+                  <button className="btn-ghost" onClick={() => addSuggestion(t)}
+                    style={{ fontSize: 11, padding: '3px 8px', color: 'var(--color-sky)' }}>
+                    + Add
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -308,7 +474,7 @@ export default function DailyTodoList({ onFocusTask }: Props) {
 
         {/* Search dropdown */}
         {showSearch && (
-          <div ref={dropdownRef} style={{
+          <div style={{
             position: 'absolute', left: 0, right: 0, top: '100%', marginTop: 4,
             background: 'var(--bg-card)', border: '1px solid var(--border-color)',
             borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-md)',
@@ -341,7 +507,8 @@ export default function DailyTodoList({ onFocusTask }: Props) {
         <strong>/high</strong> <strong>/low</strong> priority &nbsp;·&nbsp;
         <strong>/30m</strong> <strong>/1h</strong> time &nbsp;·&nbsp;
         <strong>/tag</strong> Name &nbsp;·&nbsp;
-        <strong>/tomorrow</strong>
+        <strong>/tomorrow</strong> &nbsp;·&nbsp;
+        drag to reorder
       </div>
     </div>
   );
