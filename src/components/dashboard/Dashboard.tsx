@@ -9,6 +9,7 @@ import {
 } from '@/lib/utils';
 import type { Task, Project, WritingProject, Routine, RoutineItem } from '@/types';
 import DailyTodoList from '@/components/dashboard/DailyTodoList';
+import DailyReflection from '@/components/dashboard/DailyReflection';
 
 interface QuoteSlide {
   lines: string[];
@@ -572,6 +573,9 @@ export default function Dashboard({ onNavigate, onOpenPomodoro, onOpenRoulette, 
               </div>
             </div>
           )}
+
+          {/* Daily Reflection */}
+          <DailyReflection completedCount={completedToday.length} totalPlanned={todayTasks.length} />
 
           {/* Doom Pile */}
           <DoomPileDetector onNavigateToTasks={() => onNavigate('tasks')} />

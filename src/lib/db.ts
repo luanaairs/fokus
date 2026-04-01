@@ -4,7 +4,7 @@ import type {
   LessonPlan, WritingProject, Capture, FocusSession,
   ParkingLotItem, DailyStreak, AppSettings,
   Routine, RoutineItem, RoutineRun,
-  UserXP, PomodoroSession
+  UserXP, PomodoroSession, DailyReflection
 } from '@/types';
 
 class FokusDB extends Dexie {
@@ -25,6 +25,7 @@ class FokusDB extends Dexie {
   routineRuns!: EntityTable<RoutineRun, 'id'>;
   userXP!: EntityTable<UserXP, 'id'>;
   pomodoroSessions!: EntityTable<PomodoroSession, 'id'>;
+  dailyReflections!: EntityTable<DailyReflection, 'id'>;
 
   constructor() {
     super('fokus');
@@ -77,6 +78,26 @@ class FokusDB extends Dexie {
       routineRuns: 'id, routineId, date, startedAt',
       userXP: 'id',
       pomodoroSessions: 'id, taskId, type, completedAt',
+    });
+    this.version(4).stores({
+      students: 'id, name, grade, subject, *tags, groupId, createdAt',
+      studentGroups: 'id, name',
+      notes: 'id, studentId, projectId, writingProjectId, isProgressNote, createdAt, *tags',
+      tasks: 'id, status, priority, dueDate, projectId, studentId, writingProjectId, parentTaskId, createdAt',
+      projects: 'id, name, isTeaching, createdAt',
+      lessonPlans: 'id, studentId, groupId, status, date, createdAt',
+      writingProjects: 'id, title, status, createdAt',
+      captures: 'id, processed, createdAt',
+      focusSessions: 'id, taskId, startedAt',
+      parkingLot: 'id, processed, createdAt',
+      dailyStreaks: 'id, date',
+      settings: 'id',
+      routines: 'id, type, timeOfDay, isActive, isTemplate, createdAt',
+      routineItems: 'id, routineId, type, linkedTaskId, sortOrder, createdAt',
+      routineRuns: 'id, routineId, date, startedAt',
+      userXP: 'id',
+      pomodoroSessions: 'id, taskId, type, completedAt',
+      dailyReflections: 'id, date, createdAt',
     });
   }
 }
@@ -279,6 +300,7 @@ export async function exportAllData(): Promise<string> {
     routineRuns: await db.routineRuns.toArray(),
     userXP: await db.userXP.toArray(),
     pomodoroSessions: await db.pomodoroSessions.toArray(),
+    dailyReflections: await db.dailyReflections.toArray(),
     exportedAt: new Date().toISOString(),
   };
   return JSON.stringify(data, null, 2);
@@ -291,7 +313,7 @@ export async function importAllData(json: string, mode: 'merge' | 'replace'): Pr
     'lessonPlans', 'writingProjects', 'captures', 'focusSessions',
     'parkingLot', 'dailyStreaks',
     'routines', 'routineItems', 'routineRuns',
-    'userXP', 'pomodoroSessions',
+    'userXP', 'pomodoroSessions', 'dailyReflections',
   ] as const;
 
   if (mode === 'replace') {
